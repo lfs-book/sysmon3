@@ -1,0 +1,35 @@
+sysmon3 (pronounced sys-mon-three) is a follow on to sysmon-qt.
+
+This is a part of a client/server process.  The server is sysmond and is
+required to be running on the monitored system for sysmon3 to work.
+
+The program is based on Qt (either qt5 or qt6).  It allows for setup and
+configuration of a small window in a graphical environment to monitor a
+system's critical running parameters:
+
+Hostname
+Time
+Date
+Uptime
+CPU Load (1, 5, 15 minute readings)
+A progress bar with percent of CPU (all cores) usage
+A progress bar with percent of memory usage
+System temperature sensors
+
+These values are determined by the server's sysmond server process and sent to
+the client when requested.
+
+The main process runs in a loop, once a second, where is sends a UDP request to
+the server and receives all values as a response.  The client then parses then
+response and desplays the items desired. The loop time is not currently
+configurable.
+
+When setting up the host to be monitored, the system needs to find the IP
+address of the server.  One element of the response is the hostname. This can
+be a little confusing.  If the host is accessed by www.example.org, but the
+hosts name is 'mercury', then the setup requires www.example.org to be
+specified, but the top line will display 'mercury' as the host name.
+
+The source code is written it provide a reaonably well documented example of a
+non-trivial application based on Qt.  The source is about 2700 lines of C++
+code divided into 17 files.  

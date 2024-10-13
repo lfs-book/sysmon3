@@ -1,0 +1,51 @@
+Prerequsites: qt6 (alternately qt5)
+
+To build sysmon3 (pronounced sys-mon-three), run:
+
+  qmake sysmond.pro
+  make
+
+On most modern systems this should take less than 30 seconds.  Much 
+less if parallelism (-j<number>) is used for make.
+
+If desired, copy the executable, sysmon3, to a system location
+such as /usr/bin.
+---------
+When started without parameters, the program will ask what system to monitor.
+The default is localhost.  To add a different system, enter it into the line
+below the list box and push "Add', 'Test', and 'Save'.  The sysmond daemon must
+be running on the monitored system. Using the 'Test' button determines if it is
+running on the desired system. Finally pushing 'Start' will exit the setup
+window and start the main window.
+
+After a host is set up, the setup window asking for the server can be bypassed
+by specifying the host to monitor on the command line. For example:
+
+  sysmon3 remotesys
+  sysmon3 localhost
+
+Multiple instances of sysmon3 can be run at one time for different systems.  It
+can be even be run multiple times for the same system, but that doesn't make much
+sense.  If desired though, muliple workstations can monitor the same server.
+
+Controlling the program:
+
+A right click on the window brings up a short menu:
+  F1     - Configuration
+  Ctrl-Q - Exit/Close the application
+  Ctrl-F - Toggle the window frame
+
+The main window starts up without a frame.  The frame can be turned on and off
+with Ctrl-F.  This is useful for moving the window to the desired location.
+
+When the application exits normally, the system saves it's location (for the
+current monitored system) and will use that when restarting 
+
+The configuration then allows selection, and in some cases format, of the 
+items to monitor.  Sub-windows allow customization of fonts, colors, and
+what temperature sensors to monitor.  The displayed labels for temperature
+sensors can also be customized. Selecting 'Apply' immediately takes changes
+to the main window effective.
+
+Note: The configuration file is $HOME/.config/LinuxFromScratch/sysmon3.conf.
+This file can be read, but is designed to be managed from the application.
