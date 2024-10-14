@@ -34,3 +34,4 @@
 .qmake.stash
 moc*
 sysmon3
+Makefile

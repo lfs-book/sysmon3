@@ -241,8 +241,8 @@ void SM_Color::apply()
 
 void SM_Color::redraw( void )
 {
-   QString lblFg      = settings->value( server + "-labelColor",    "#000000").toString();
-   QString lblBg      = settings->value( server + "-labelBg",       "#ffffff").toString();
+   QString lblFg      = settings->value( server + "-labelColor",    "#ffffff").toString();
+   QString lblBg      = settings->value( server + "-labelBg",       "#999999").toString();
 
    QString dataFg     = settings->value( server + "-dataColor",     "#efefef").toString();
    QString dataBg     = settings->value( server + "-dataBg",        "#000000").toString();

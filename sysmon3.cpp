@@ -390,8 +390,8 @@ void sysmon3::get_settings( QString server )
    // Palettes
    QPalette p;
    
-   QString lblColor = settings.value( server + "-labelColor", "#000000" ).toString();
-   QString lblBg    = settings.value( server + "-labelBg",    "#efefef" ).toString();
+   QString lblColor = settings.value( server + "-labelColor", "#ffffff" ).toString();
+   QString lblBg    = settings.value( server + "-labelBg",    "#999999" ).toString();
 //qDebug() << "server: " << server << "; lblColor: " << lblColor << "; lblBg:" << lblBg;
    
    p.setColor( QPalette::Active,   QPalette::WindowText, QColor( lblColor ) );
@@ -726,8 +726,8 @@ void sysmon3::set_palettes( void )
 {
    QPalette p;
 
-   QString lblColor = settings.value( server + "-labelColor", "#000000" ).toString();
-   QString lblBg    = settings.value( server + "-labelBg",    "#efefef" ).toString();
+   QString lblColor = settings.value( server + "-labelColor", "#ffffff" ).toString();
+   QString lblBg    = settings.value( server + "-labelBg",    "#999999" ).toString();
 //qDebug() << "server: " << server << " lblColor: "  << lblColor;
    p.setColor( QPalette::Active,   QPalette::WindowText, QColor( lblColor ) );
    p.setColor( QPalette::Active,   QPalette::Window,     QColor( lblBg    ) );

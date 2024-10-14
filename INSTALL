@@ -2,7 +2,7 @@ Prerequsites: qt6 (alternately qt5)
 
 To build sysmon3 (pronounced sys-mon-three), run:
 
-  qmake sysmond.pro
+  qmake sysmon3.pro
   make
 
 On most modern systems this should take less than 30 seconds.  Much 
