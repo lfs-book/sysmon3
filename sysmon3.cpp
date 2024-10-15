@@ -317,7 +317,7 @@ void sysmon3::parse_data()
    if ( data == "Timeout" )
    {
       QMessageBox msgBox;
-      msgBox.setText( "The systemd server does not seem to be running." );
+      msgBox.setText( "The sysmond server does not seem to be running." );
       msgBox.exec();
 
       exit( EXIT_FAILURE );
