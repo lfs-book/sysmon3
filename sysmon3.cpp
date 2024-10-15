@@ -89,7 +89,7 @@ sysmon3::sysmon3( QString arg1 )
 
 void sysmon3::config( void )
 {  
-   SM_Config* w = new SM_Config( server, &settings, this );
+   SM_Config* w = new SM_Config( server, &settings, data, this );
    w->show();
    connect( w, SIGNAL( updateEntries() ), this, SLOT( updateLayout() ) );
    connect( w, SIGNAL( updateFonts  () ), this, SLOT( updateFont()   ) );
@@ -127,12 +127,11 @@ void sysmon3::setup_all( QString server )
    data = udp->getData();
 
    parse_data();
-//qDebug() << "1111";
+
    // Use server name to initialize saved data
-   //get_settings( serverData.server );
    get_settings( server );
 
-   // Workaround...
+   // Workaround before first fetch of data
    lbl_hostname->setText( serverData.server );
    lbl_hostname->setPalette( banner_palette );
 
@@ -141,12 +140,8 @@ void sysmon3::setup_all( QString server )
    setup_uptime();
    setup_cpuLoad();
    setup_memory();
-//qDebug() << "1112";
    setup_temps();
-//qDebug() << "1113";
-
    updateFont();
-//qDebug() << "1114";
 
    // End of layout
 
@@ -632,29 +627,27 @@ void sysmon3::updateFont( void )
    font_family = settings.value( server + "-fontFamily", "DejaVu Sans" ).toString();
    font_size   = settings.value( server + "-fontSize"  , 12 ).toInt();
    font_normal = QFont( font_family, font_size );
-//qDebug() << "2222";
+
    bool bold   = settings.value( server + "-fontBold"  , false ).toBool();
    QFont::Weight weight = bold ? QFont::Bold : QFont::Normal;
    font_normal.setWeight( weight );
 
    QFont fontBold = QFont( font_family, font_size, QFont::Bold );
 
-//qDebug() << "2223";
    // Set fonts on all elements
    lbl_hostname->setFont( fontBold );
-//qDebug() << "222a";
+
    if ( lbl_time   != nullptr ) lbl_time  ->setFont( font_normal );
    if ( lbl_date   != nullptr ) lbl_date  ->setFont( font_normal );
    if ( lbl_uptime != nullptr ) lbl_uptime->setFont( font_normal );
    if ( lbl_cpu    != nullptr ) lbl_cpu   ->setFont( fontBold    ); // title
    if ( lbl_loads  != nullptr ) lbl_loads ->setFont( font_normal ); 
    if ( lbl_memory != nullptr ) lbl_memory->setFont( fontBold    ); // title
-//qDebug() << "2224";
+
    // Progress bars
    if ( load       != nullptr ) load      ->setFont( font_normal );
    if ( memory     != nullptr ) memory    ->setFont( font_normal );
 
-//qDebug() << "2224";
    // Need to update fonts for temps 
    if ( tempsLayout != nullptr )
    {
@@ -728,7 +721,7 @@ void sysmon3::set_palettes( void )
 
    QString lblColor = settings.value( server + "-labelColor", "#ffffff" ).toString();
    QString lblBg    = settings.value( server + "-labelBg",    "#999999" ).toString();
-//qDebug() << "server: " << server << " lblColor: "  << lblColor;
+
    p.setColor( QPalette::Active,   QPalette::WindowText, QColor( lblColor ) );
    p.setColor( QPalette::Active,   QPalette::Window,     QColor( lblBg    ) );
    p.setColor( QPalette::Inactive, QPalette::WindowText, QColor( lblColor ) );

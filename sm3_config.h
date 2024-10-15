@@ -26,15 +26,13 @@ public:
     /*! \brief The constructor creates the various controls for the main
                window.  
     */
-   SM_Config( QString, QSettings*, QWidget* = nullptr );
+   SM_Config( QString, QSettings*, QString, QWidget* = nullptr );
    ~SM_Config() {};
   
-   QPushButton* pb_apply;
-
 private:
    QSettings*   settings;
-
    QString      server;
+   QString      data;
 
    QLabel*      version;
    QLabel*      lbl_font;
@@ -52,6 +50,7 @@ private:
    QPushButton* PBuptime;
    QPushButton* PBcpu;
    QPushButton* PBmemory;
+   QPushButton* pb_apply;
 
    QCheckBox*   CBtime;
    QCheckBox*   CBdate;

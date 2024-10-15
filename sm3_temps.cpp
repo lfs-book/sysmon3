@@ -3,10 +3,11 @@
 #include "sm3_temps.h"
 #include "udp.h"
 
-SM3_Temps::SM3_Temps( QString system, QSettings* baseSettings ) 
+SM3_Temps::SM3_Temps( QString system, QSettings* baseSettings, QString dta ) 
 {
    server   = system;
    settings = baseSettings;
+   data     = dta;
 
    // Set up widgets
    setWidgetData( server, settings );
@@ -38,7 +39,7 @@ SM3_Temps::SM3_Temps( QString system, QSettings* baseSettings )
    tempsLayout->addWidget( lblSelected,  row,   2 );
    tempsLayout->addWidget( lblLabel,     row++, 3 );
 
-   // A line looks like:
+   // A line (lines 2 to n) looks like:
    // interface:<interface name>,<sensor name:value[,<sensor name:value...]
 
    // Add temperature data
@@ -108,10 +109,6 @@ SM3_Temps::SM3_Temps( QString system, QSettings* baseSettings )
 
 void SM3_Temps::get_temp_data( void )
 {  
-   sysmonUDP* udp  = new sysmonUDP( &server );
-   QString    data = udp->getData();
-   delete udp;
-   
    sensors = data.split( '\n', Qt::SkipEmptyParts );
 }
 

@@ -5,12 +5,13 @@
 #include "sm3_font.h"
 #include "sm3_temps.h"
 
-SM_Config::SM_Config( QString system, QSettings* baseSettings, QWidget* parent )
+SM_Config::SM_Config( QString system, QSettings* baseSettings, QString dta, QWidget* parent )
 {
    setWindowTitle( "sysmon-qt Configuration" );
 
    server   = system;
    settings = baseSettings;
+   data     = dta;
 
    // Set up widgets
    setWidgetData( server, settings );
@@ -310,7 +311,7 @@ void SM_Config::update_colors( void )
 
 void SM_Config::update_temps( void )
 {
-   SM3_Temps* temps = new SM3_Temps( server, settings );  
+   SM3_Temps* temps = new SM3_Temps( server, settings, data );  
    temps->setWindowModality( Qt::WindowModal );  
    temps->show();
    connect( temps, SIGNAL( updateTemps() ), this, SLOT( sendTemps() ) );

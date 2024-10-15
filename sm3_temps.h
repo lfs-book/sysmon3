@@ -12,34 +12,34 @@ class SM3_Temps : public SM_Widgets
   
   public:
     //*! \brief Construct the window for font selection
-    SM3_Temps( QString, QSettings* );
+    SM3_Temps( QString, QSettings*, QString );
     
     //! \brief A null destructor.
     ~SM3_Temps() {};
-
-    QPushButton* pb_apply;
 
   signals:  
     void updateTemps( void );
 
   private:
-    QSettings*          settings;
-    QString             server;
+    QSettings*   settings;
+    QString      server;
+    QString      data;
 
-    QGridLayout*        tempsLayout;
+    QGridLayout* tempsLayout;
 
-    QStringList         sensors;  // <Interface,Device>
-    QStringList         config;  
+    QStringList  sensors;  // <Interface,Device>
+    QStringList  config;  
 
-    QPushButton*        pb_exit;
-    //QPushButton*        pb_help;
+    QPushButton* pb_exit;
+    QPushButton* pb_apply;
+    //QPushButton* pb_help;
 
     void get_temp_data( void );
     void get_saved_temp_config( void );
 
   private slots:
   
-    void apply     ( void );
-    //void help      ( void );
+    void apply( void );
+    //void help ( void );
 };
 #endif

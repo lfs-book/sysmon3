@@ -34,6 +34,7 @@ sysmonUDP::sysmonUDP( QString* server, int port )
 
      udp_socket = socket( AF_INET, SOCK_DGRAM, 0);
 
+     // Make the socket time out after the timeval duration
      setsockopt( udp_socket, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof( tv ) );
 }
 
