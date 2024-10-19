@@ -311,11 +311,23 @@ void sysmon3::parse_data()
 {
    if ( data == "Timeout" )
    {
-      QMessageBox msgBox;
-      msgBox.setText( "The sysmond server does not seem to be running." );
+      QMessageBox msgBox( this );
+      msgBox.setText( "The sysmond server does not seem to be running. Retry?" );
+
+      //QAbstractButton* retryButton = 
+         msgBox.addButton( "Retry", QMessageBox::YesRole );
+      
+      QAbstractButton* exitButton =
+         msgBox.addButton( "Exit",  QMessageBox::NoRole );
+      
       msgBox.exec();
 
-      exit( EXIT_FAILURE );
+//qDebug() << "msgBox.clickedButton:" << msgBox.clickedButton()->text();
+
+      if ( msgBox.clickedButton() == exitButton )
+         exit( EXIT_FAILURE );
+      else 
+         return;
    }
    
    QStringList lines     = data.split( '\n', Qt::SkipEmptyParts );
