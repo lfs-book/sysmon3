@@ -13,7 +13,7 @@
     palette and font acording to the user's settings (or the default).
     Depending on the widget, other parameters may be set.
 */
-class SM_Widgets : public QFrame
+class SM_Widgets 
 {
   public: 
     //! The constructor connects to global memory and moves the screen to 
