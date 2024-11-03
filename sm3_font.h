@@ -9,7 +9,7 @@
 #define BUTTON_H 26
 
 //!  A class to allow the user to select a customized font.
-class SM_Font : public SM_Widgets
+class SM_Font : public QFrame, public SM_Widgets
 {
   Q_OBJECT
   

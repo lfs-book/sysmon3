@@ -23,7 +23,7 @@ void SM_Widgets::setWidgetData( QString system, QSettings* baseSettings )
 // label
 QLabel* SM_Widgets::sm_label( const QString& labelString, int fontAdjust, QFont::Weight weight )
 {
-   QLabel* newLabel = new QLabel( labelString, this );
+   QLabel* newLabel = new QLabel( labelString );
 
    newLabel->setFrameStyle( QFrame::StyledPanel | QFrame::Raised );
    newLabel->setAlignment ( Qt::AlignVCenter | Qt::AlignLeft );
@@ -62,7 +62,7 @@ QLabel* SM_Widgets::sm_banner( const QString& labelString, int fontAdjust, QFont
 QPushButton* SM_Widgets::sm_pushbutton( const QString& labelString, bool enabled,
                                         int fontAdjust )
 {
-   QPushButton* button = new QPushButton( tr( labelString.toLatin1() ), this );
+   QPushButton* button = new QPushButton( labelString.toLatin1() );
 
    QFont thisFont = font;
    thisFont.setPointSize( font.pointSize() + fontAdjust );
@@ -80,7 +80,7 @@ QPushButton* SM_Widgets::sm_pushbutton( const QString& labelString, bool enabled
 // SpinBox
 QSpinBox* SM_Widgets::sm_spinBox( const int fontAdjust )
 {
-   QSpinBox* sbox = new QSpinBox( this );
+   QSpinBox* sbox = new QSpinBox();
 
    QFont thisFont = font;
    thisFont.setPointSize( font.weight() + fontAdjust );
@@ -94,7 +94,7 @@ QSpinBox* SM_Widgets::sm_spinBox( const int fontAdjust )
 // Combo Box
 QComboBox* SM_Widgets::sm_comboBox( void )
 {
-  QComboBox* cb = new QComboBox( this );
+  QComboBox* cb = new QComboBox();
 
   cb->setAutoFillBackground( true );
   cb->setFont( font );
@@ -117,7 +117,7 @@ QGridLayout* SM_Widgets::sm_checkbox(
    lb_spacer->setFixedWidth        ( fm.horizontalAdvance( "w" ) ); 
    lb_spacer->setAutoFillBackground( true );
 
-   cb = new QCheckBox( text.toLatin1(), this );
+   cb = new QCheckBox( text.toLatin1() );
    cb->setFont              ( thisFont  );
    cb->setChecked           ( state );
    cb->setAutoFillBackground( true  );
@@ -136,7 +136,7 @@ QGridLayout* SM_Widgets::sm_checkbox(
 QLineEdit* SM_Widgets::sm_lineedit( const QString& text, int fontAdjust,
       bool readonly )
 {
-   QLineEdit* le = new QLineEdit( this );
+   QLineEdit* le = new QLineEdit();
 
    if ( readonly ) fontAdjust++;  
 

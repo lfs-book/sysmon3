@@ -18,7 +18,7 @@
            It also provides pushbuttons for access to screens to configure 
            the user's fonts and widget colors.
 */
-class SM_Config : public SM_Widgets
+class SM_Config : public QFrame, public SM_Widgets
 {
   Q_OBJECT
 

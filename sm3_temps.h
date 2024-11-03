@@ -6,7 +6,7 @@
 #include "sm3_config.h"
 
 //!  A class to allow the user to select a customized font.
-class SM3_Temps : public SM_Widgets
+class SM3_Temps : public QFrame, public SM_Widgets
 {
   Q_OBJECT
   
