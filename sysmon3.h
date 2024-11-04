@@ -23,6 +23,8 @@ public:
    QSettings settings;
    QString   server;  // Used before serverData is populated
 
+   QString   data;
+
 public slots:
    void showMain   ( QString );
    void updateFont ( void );
@@ -75,8 +77,6 @@ private:
    QString   font_family;
    int       font_size;
    QFont     font_normal;
-
-   QString data;
 
    QPalette  banner_palette; 
    QPalette  data_palette;

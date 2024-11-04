@@ -4,28 +4,30 @@
 
 #include "sm3_widgets.h"
 #include "sm3_config.h"
+#include "sysmon3.h"
 
 //! Define the height of widgets in pixels.
 #define BUTTON_H 26
 
 //!  A class to allow the user to select a customized font.
-class SM_Font : public QFrame, public SM_Widgets
+class SM_Font : public QFrame //, public SM_Widgets
 {
   Q_OBJECT
   
   public:
     //*! \brief Construct the window for font selection
-    SM_Font( QString, QSettings* );
+    SM_Font( sysmon3* parent = nullptr ); 
     
     //! \brief A null destructor.
     ~SM_Font() {};
 
-    QPushButton* pb_apply;
 
   signals:  
     void updateFonts( void );
 
   private:
+    SM_Widgets*  widgets;  // Probably should be private
+
     QSettings*   settings;
     QString      server;
 
@@ -50,6 +52,8 @@ class SM_Font : public QFrame, public SM_Widgets
     QPushButton* pb_default;
     //QPushButton* pb_help;
     QPushButton* pb_exit;
+    QPushButton* pb_apply;
+
 
     void redraw( void );
 

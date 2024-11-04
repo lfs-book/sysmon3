@@ -2,6 +2,12 @@
 
 #include "sm3_widgets.h"
 
+SM_Widgets::SM_Widgets( QFont f ) : font( f )
+{
+   //font = QFont( settings->value( server + "-fontFamily", "DejaVu Sans" ).toString(), 
+   //              settings->value( server + "-fontSize"  , 12 ).toInt() );
+}
+
 SM_Widgets::SM_Widgets()
 {
    //font = QFont( settings->value( server + "-fontFamily", "DejaVu Sans" ).toString(), 
@@ -18,7 +24,6 @@ void SM_Widgets::setWidgetData( QString system, QSettings* baseSettings )
    font = QFont( settings->value( server + "-fontFamily", "DejaVu Sans" ).toString(), 
                  settings->value( server + "-fontSize"  , 12 ).toInt() );
 }
-
 
 // label
 QLabel* SM_Widgets::sm_label( const QString& labelString, int fontAdjust, QFont::Weight weight )
@@ -150,4 +155,3 @@ QLineEdit* SM_Widgets::sm_lineedit( const QString& text, int fontAdjust,
 
    return le;
 }
-

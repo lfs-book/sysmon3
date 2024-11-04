@@ -89,7 +89,8 @@ sysmon3::sysmon3( QString arg1 )
 
 void sysmon3::config( void )
 {  
-   SM_Config* w = new SM_Config( server, &settings, data, this );
+   SM_Config* w = new SM_Config( this );
+   //SM_Config* w = new SM_Config( server, &settings, data, this );
    w->show();
    connect( w, SIGNAL( updateEntries() ), this, SLOT( updateLayout() ) );
    connect( w, SIGNAL( updateFonts  () ), this, SLOT( updateFont()   ) );

@@ -2,20 +2,22 @@
 #include "sysmon3.h"
 #include "sm3_font.h"
 
-SM_Font::SM_Font( QString system, QSettings* baseSettings ) 
+SM_Font::SM_Font( sysmon3* parent )
 {
-   server   = system;
-   settings = baseSettings;
+              server    = parent->server; 
+              settings  = &parent->settings;
+   
+   QString    familyKey = server + "-fontFamily";
+   QString    family    = settings->value( familyKey, "DejaVu Sans" ).toString();
+   
+   QString    sizeKey   = server + "-fontSize";
+   int        fontSize  = settings->value( sizeKey, 12 ).toInt();
+   
+   QFont      oldfont   = QFont( family, fontSize );
 
-   // Set up widgets
-   setWidgetData( server, settings );
+              widgets   = new SM_Widgets( oldfont );
 
-   // Get current font; second parameter is default
-   QString family  = settings->value( server + "-fontFamily", "DejaVu Sans" ).toString();
-   int     size    = settings->value( server + "-fontSize"  , 12 ).toInt();
-   bool    checked = settings->value( server + "-fontBold"  , false ).toBool();
-
-//   setPalette( US_GuiSettings::frameColor() );
+   bool       checked   = settings->value( server + "-fontBold", false ).toBool();
 
    // Frame layout
    setWindowTitle( "Font Selection Dialog" );
@@ -25,17 +27,17 @@ SM_Font::SM_Font( QString system, QSettings* baseSettings )
    topbox->setSpacing( 2 );
 
    // Body
-   pb_font = sm_pushbutton( tr( "Select Base Font" ) );
+   pb_font = widgets->sm_pushbutton( tr( "Select Base Font" ) );
    topbox->addWidget( pb_font );
    connect( pb_font, SIGNAL( clicked() ), SLOT( selectFont() ) );
 
-   lbl_family = sm_label( tr( "Current Family:" ), -1 );
+   lbl_family = widgets->sm_label( tr( "Current Family:" ), -1 );
    lbl_family->setFixedHeight( BUTTON_H );
    
    QGridLayout* lineGrid = new QGridLayout();
 
    QFontDatabase fontLib;; 
-   cb_family = sm_comboBox();
+   cb_family = widgets->sm_comboBox();
    cb_family->addItems( fontLib.families() );
    cb_family->setCurrentText( family );
 
@@ -47,17 +49,17 @@ SM_Font::SM_Font( QString system, QSettings* baseSettings )
    lineGrid->addWidget( lbl_family, row  , 0 );
    lineGrid->addWidget( cb_family , row++, 1 );
 
-   lbl_size = sm_label( tr( "Point Size:" ), -1 );
+   lbl_size = widgets->sm_label( tr( "Point Size:" ), -1 );
    lbl_size->setFixedHeight( BUTTON_H );
   
-   sb_size = sm_spinBox();
+   sb_size = widgets->sm_spinBox();
    sb_size->setRange( 9, 24 );
-   sb_size->setValue( size );    
+   sb_size->setValue( fontSize );    
 
    connect( sb_size, SIGNAL( valueChanged ( int ) ),
             this,    SLOT  ( update       ( int ) ) ); 
 
-   ckbox_grid = sm_checkbox( "Bold", ckbox_bold, checked );
+   ckbox_grid = widgets->sm_checkbox( "Bold", ckbox_bold, checked );
 
    stats_row = new QHBoxLayout();
    stats_row->addWidget( lbl_size );
@@ -66,40 +68,40 @@ SM_Font::SM_Font( QString system, QSettings* baseSettings )
 
    lineGrid->addLayout( stats_row, row++, 0 );
 
-   samples = sm_banner( tr( "Selected Font Samples:" ) );
+   samples = widgets->sm_banner( tr( "Selected Font Samples:" ) );
    lineGrid->addWidget( samples, row++, 0, 1, 2 );
 
-   small = sm_label( tr( "Small Font Sample" ), -1 );
+   small = widgets->sm_label( tr( "Small Font Sample" ), -1 );
    lineGrid->addWidget( small, row++, 0, 1, 2 );
 
-   regular = sm_label( tr( "Regular Font Sample" ) );
+   regular = widgets->sm_label( tr( "Regular Font Sample" ) );
    lineGrid->addWidget( regular, row++, 0, 1, 2 );
 
-   regularBold = sm_label( tr( "Regular Font Sample, Bold" ), 0, QFont::Bold );
+   regularBold = widgets->sm_label( tr( "Regular Font Sample, Bold" ), 0, QFont::Bold );
    lineGrid->addWidget( regularBold, row++, 0, 1, 2 );
 
-   large = sm_label( tr( "Large Font Sample" ), +1 );
+   large = widgets->sm_label( tr( "Large Font Sample" ), +1 );
    lineGrid->addWidget( large, row++, 0, 1, 2 );
 
-   largeBold = sm_label( tr( "Large Font Sample, Bold" ), +1, QFont::Bold );
+   largeBold = widgets->sm_label( tr( "Large Font Sample, Bold" ), +1, QFont::Bold );
    lineGrid->addWidget( largeBold, row++, 0, 1, 2 );
 
-   title = sm_label( tr( "Title Font Sample" ), +2, QFont::Bold );
+   title = widgets->sm_label( tr( "Title Font Sample" ), +2, QFont::Bold );
    lineGrid->addWidget( title, row++, 0, 1, 2 );
 
    topbox->addLayout( lineGrid );
 
-   pb_default = sm_pushbutton( tr( "Select Default" ) );
+   pb_default = widgets->sm_pushbutton( tr( "Select Default" ) );
    connect( pb_default, SIGNAL( clicked() ), SLOT( setDefault() ) );
    topbox->addWidget( pb_default );
 
-   pb_apply = sm_pushbutton( tr( "Apply" ) );
+   pb_apply = widgets->sm_pushbutton( tr( "Apply" ) );
    connect( pb_apply, SIGNAL( clicked() ), SLOT( apply() ) );
 
    //pb_help = sm_pushbutton( tr( "Help" ) );
    //connect( pb_help, SIGNAL( clicked() ), SLOT( help() ) );
 
-   pb_exit = sm_pushbutton( tr( "Exit" ) );
+   pb_exit = widgets->sm_pushbutton( tr( "Exit" ) );
    connect( pb_exit, SIGNAL( clicked() ), SLOT( close() ) );
 
    QBoxLayout* buttons = new QHBoxLayout();

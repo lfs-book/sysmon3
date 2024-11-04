@@ -7,18 +7,25 @@
 
 SM_Config::SM_Config( QString system, QSettings* baseSettings, QString dta, QWidget* parent )
 {
+}
+
+SM_Config::SM_Config( sysmon3* parent )
+{
+              main      = parent;
+              server    = parent->server;
+              settings  = &parent->settings;
+
+   QString    familyKey = server + "-fontFamily";
+   QString    family    = settings->value( familyKey, "DejaVu Sans" ).toString();
+
+   QString    sizeKey   = server + "-fontSize";
+   int        fontSize  = settings->value( sizeKey, 12 ).toInt();
+
+   QFont      oldfont   = QFont( family, fontSize ); 
+
+              widgets   = new SM_Widgets( oldfont ); 
+
    setWindowTitle( "sysmon-qt Configuration" );
-
-   server   = system;
-   settings = baseSettings;
-   data     = dta;
-
-   // Set up widgets
-   setWidgetData( server, settings );
-
-   QString family  = settings->value( server + "-fontFamily", "DejaVu Sans" ).toString();
-   int     size    = settings->value( server + "-fontSize"  , 12 ).toInt();
-   QFont   oldfont = QFont( family, size, QFont::Normal );  
 
    // Directories
    
@@ -26,7 +33,7 @@ SM_Config::SM_Config( QString system, QSettings* baseSettings, QString dta, QWid
    topbox->setContentsMargins ( 2, 2, 2, 2 );
    topbox->setSpacing         ( 2 );
 
-   version = sm_label( "Version: " SMVERSION );
+   version = widgets->sm_label( "Version: " SMVERSION );
    topbox->addWidget( version );
 
    int row = 0;
@@ -36,9 +43,9 @@ SM_Config::SM_Config( QString system, QSettings* baseSettings, QString dta, QWid
    QString timeFormat  = settings->value( server + "-timeFormat", "HH:mm:ss" ).toString();
    bool    timeChecked = settings->value( server + "-useTime",    true       ).toBool();
 
-   QGridLayout* CBTimeLayout = sm_checkbox( "time", CBtime, timeChecked );
-                LEtime       = sm_lineedit( timeFormat );
-                PBtime       = sm_pushbutton( tr( "Help" ) );
+   QGridLayout* CBTimeLayout = widgets->sm_checkbox( "time", CBtime, timeChecked );
+                LEtime       = widgets->sm_lineedit( timeFormat );
+                PBtime       = widgets->sm_pushbutton( tr( "Help" ) );
 
    CBtime->setFont( oldfont );
    LEtime->setFont( oldfont );
@@ -54,9 +61,9 @@ SM_Config::SM_Config( QString system, QSettings* baseSettings, QString dta, QWid
    QString dateFormat  = settings->value( server + "-dateFormat", "ddd d MMM" ).toString();
    bool    dateChecked = settings->value( server + "-useDate",    true        ).toBool();
 
-   QGridLayout* CBDateLayout = sm_checkbox( "date", CBdate, dateChecked );
-                LEdate       = sm_lineedit( dateFormat );
-                PBdate       = sm_pushbutton( tr( "Help" ) );
+   QGridLayout* CBDateLayout = widgets->sm_checkbox( "date", CBdate, dateChecked );
+                LEdate       = widgets->sm_lineedit( dateFormat );
+                PBdate       = widgets->sm_pushbutton( tr( "Help" ) );
 
    CBdate->setFont( oldfont );
    LEdate->setFont( oldfont );
@@ -71,8 +78,8 @@ SM_Config::SM_Config( QString system, QSettings* baseSettings, QString dta, QWid
    // uptime
    bool uptimeChecked = settings->value( server + "-useUptime", true ).toBool();
 
-   QGridLayout* CBuptimeLayout = sm_checkbox( "uptime", CBuptime, uptimeChecked );
-                PBuptime       = sm_pushbutton( tr( "Help" ) );
+   QGridLayout* CBuptimeLayout = widgets->sm_checkbox( "uptime", CBuptime, uptimeChecked );
+                PBuptime       = widgets->sm_pushbutton( tr( "Help" ) );
 
    CBuptime->setFont( oldfont );
    PBuptime->setFont( oldfont );
@@ -86,9 +93,9 @@ SM_Config::SM_Config( QString system, QSettings* baseSettings, QString dta, QWid
    bool CPUchecked = settings->value( server + "-useCPU",    true ).toBool();
    bool CPUbar     = settings->value( server + "-useCPUbar", true ).toBool();
 
-   QGridLayout* CBcpuLayout    = sm_checkbox( "CPU Load", CBcpu,    CPUchecked );
-   QGridLayout* CBcpuBarLayout = sm_checkbox( "CPU Bar",  CBcpuBar, CPUbar );
-                PBcpu          = sm_pushbutton( tr( "Help" ) );
+   QGridLayout* CBcpuLayout    = widgets->sm_checkbox( "CPU Load", CBcpu,    CPUchecked );
+   QGridLayout* CBcpuBarLayout = widgets->sm_checkbox( "CPU Bar",  CBcpuBar, CPUbar );
+                PBcpu          = widgets->sm_pushbutton( tr( "Help" ) );
 
    CBcpu   ->setFont( oldfont );
    CBcpuBar->setFont( oldfont );
@@ -103,8 +110,8 @@ SM_Config::SM_Config( QString system, QSettings* baseSettings, QString dta, QWid
    // Memory display
    bool memoryChecked = settings->value( server + "-useMemory", true ).toBool();
 
-   QGridLayout* CBmemoryLayout = sm_checkbox( "Memory Bar", CBmemory, memoryChecked );
-                PBmemory       = sm_pushbutton( tr( "Help" ) );
+   QGridLayout* CBmemoryLayout = widgets->sm_checkbox( "Memory Bar", CBmemory, memoryChecked );
+                PBmemory       = widgets->sm_pushbutton( tr( "Help" ) );
 
    CBmemory->setFont( oldfont );
    PBmemory->setFont( oldfont );
@@ -121,24 +128,24 @@ SM_Config::SM_Config( QString system, QSettings* baseSettings, QString dta, QWid
    QGridLayout* otherSettings = new QGridLayout();
 
    // Font Preferences
-   lbl_font = sm_label(      tr( "Font Preferences:" ) );
-   pb_font  = sm_pushbutton( tr( "Change Font"       ) );
+   lbl_font = widgets->sm_label(      tr( "Font Preferences:" ) );
+   pb_font  = widgets->sm_pushbutton( tr( "Change Font"       ) );
 
    otherSettings->addWidget( lbl_font, row,   0 );
    otherSettings->addWidget( pb_font,  row++, 1 );
    connect( pb_font, SIGNAL( clicked() ), this, SLOT( update_font() ) );
 
    // Color Preferences
-   lbl_color = sm_label(      tr( "Color Preferences:" ) );
-   pb_color  = sm_pushbutton( tr( "Change Colors"      ) );
+   lbl_color = widgets->sm_label(      tr( "Color Preferences:" ) );
+   pb_color  = widgets->sm_pushbutton( tr( "Change Colors"      ) );
 
    otherSettings->addWidget( lbl_color, row,   0 );
    otherSettings->addWidget( pb_color,  row++, 1 );
    connect( pb_color, SIGNAL( clicked() ), this, SLOT( update_colors() ) );
 
    // Temperature Preferences
-   lbl_temps = sm_label(      tr( "Temperature Preferences:" ) );
-   pb_temps  = sm_pushbutton( tr( "Change Temps"             ) );
+   lbl_temps = widgets->sm_label(      tr( "Temperature Preferences:" ) );
+   pb_temps  = widgets->sm_pushbutton( tr( "Change Temps"             ) );
 
    otherSettings->addWidget( lbl_temps, row,   0 );
    otherSettings->addWidget( pb_temps,  row++, 1 );
@@ -148,10 +155,10 @@ SM_Config::SM_Config( QString system, QSettings* baseSettings, QString dta, QWid
    //pb_help = sm_pushbutton( tr( "Help" ) );
    //connect( pb_help, SIGNAL( clicked() ), this, SLOT( help() ) );
    
-   pb_apply = sm_pushbutton( tr( "Apply" ) );
+   pb_apply = widgets->sm_pushbutton( tr( "Apply" ) );
    connect( pb_apply, SIGNAL( clicked() ), this, SLOT( apply() ) );
 
-   pb_exit = sm_pushbutton( tr( "Exit" ) );
+   pb_exit = widgets->sm_pushbutton( tr( "Exit" ) );
    connect( pb_exit, SIGNAL( clicked() ), this, SLOT( close() ) );
 
    QBoxLayout* buttons = new QHBoxLayout();
@@ -295,7 +302,8 @@ void SM_Config::sendFonts( void )
 
 void SM_Config::update_font( void )
 {
-   SM_Font* font = new SM_Font( server, settings );  
+   //SM_Font* font = new SM_Font( server, settings );  
+   SM_Font* font = new SM_Font( main );
    font->setWindowModality( Qt::WindowModal );  
    font->show();
    connect( font, SIGNAL( updateFonts() ), this, SLOT( sendFonts() ) );
@@ -320,7 +328,6 @@ void SM_Config::update_temps( void )
 void SM_Config::update_local( void )
 {
    // Update local widgets
-
    QFont font = QFont( settings->value( server + "-fontFamily", "DejaVu Sans" ).toString(),
                        settings->value( server + "-fontSize"  , 12 ).toInt() );
    

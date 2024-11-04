@@ -8,8 +8,7 @@
 
 /*! \brief Set up widgets our way.
  
-    This class is designed to be the parent class to almost all 
-    windows.  It allows easy creation of widgets and applies the appropriate
+    This class allows easy creation of widgets and applies the appropriate
     palette and font acording to the user's settings (or the default).
     Depending on the widget, other parameters may be set.
 */
@@ -18,6 +17,7 @@ class SM_Widgets
   public: 
     //! The constructor connects to global memory and moves the screen to 
     //! the point saved there. 
+    SM_Widgets( QFont );
     SM_Widgets();
     ~SM_Widgets( void ){};
 
@@ -74,5 +74,5 @@ class SM_Widgets
       QString    server;
       QFont      font;
 };
-#endif
 
+#endif

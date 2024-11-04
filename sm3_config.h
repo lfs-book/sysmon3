@@ -14,21 +14,24 @@
 
 /*! \class SM_Config
            This class provides the top level window for user configuration.
-           It allows customization of the user's Qkrellm display.
-           It also provides pushbuttons for access to screens to configure 
-           the user's fonts and widget colors.
+           It allows customization of the user's display instance.
+           It also provides pushbuttons for access to widgets to configure 
+           desired temperature items and the user's font and color preferences.
 */
-class SM_Config : public QFrame, public SM_Widgets
+class SM_Config : public QFrame
 {
   Q_OBJECT
 
 public:
-    /*! \brief The constructor creates the various controls for the main
-               window.  
-    */
+
    SM_Config( QString, QSettings*, QString, QWidget* = nullptr );
+   SM_Config( sysmon3* parent = nullptr );
    ~SM_Config() {};
   
+   SM_Widgets* widgets;
+
+   sysmon3* main;
+
 private:
    QSettings*   settings;
    QString      server;
