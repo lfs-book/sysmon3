@@ -5,25 +5,21 @@
 #include "sm3_font.h"
 #include "sm3_temps.h"
 
-SM_Config::SM_Config( QString system, QSettings* baseSettings, QString dta, QWidget* parent )
-{
-}
-
 SM_Config::SM_Config( sysmon3* parent )
 {
-              main      = parent;
-              server    = parent->server;
-              settings  = &parent->settings;
-
-   QString    familyKey = server + "-fontFamily";
-   QString    family    = settings->value( familyKey, "DejaVu Sans" ).toString();
-
-   QString    sizeKey   = server + "-fontSize";
-   int        fontSize  = settings->value( sizeKey, 12 ).toInt();
-
-   QFont      oldfont   = QFont( family, fontSize ); 
-
-              widgets   = new SM_Widgets( oldfont ); 
+              mainWindow = parent;
+              server     = parent->server;
+              settings   = &parent->settings;
+                        
+   QString    familyKey  = server + "-fontFamily";
+   QString    family     = settings->value( familyKey, "DejaVu Sans" ).toString();
+                        
+   QString    sizeKey    = server + "-fontSize";
+   int        fontSize   = settings->value( sizeKey, 12 ).toInt();
+                        
+   QFont      oldfont    = QFont( family, fontSize ); 
+                        
+              widgets    = new SM_Widgets( oldfont ); 
 
    setWindowTitle( "sysmon-qt Configuration" );
 
@@ -303,7 +299,7 @@ void SM_Config::sendFonts( void )
 void SM_Config::update_font( void )
 {
    //SM_Font* font = new SM_Font( server, settings );  
-   SM_Font* font = new SM_Font( main );
+   SM_Font* font = new SM_Font( mainWindow );
    font->setWindowModality( Qt::WindowModal );  
    font->show();
    connect( font, SIGNAL( updateFonts() ), this, SLOT( sendFonts() ) );
@@ -311,7 +307,8 @@ void SM_Config::update_font( void )
 
 void SM_Config::update_colors( void )
 {
-   SM_Color* colors = new SM_Color( server, settings );  
+   //SM_Color* colors = new SM_Color( server, settings );  
+   SM_Color* colors = new SM_Color( mainWindow );  
    colors->setWindowModality( Qt::WindowModal );  
    colors->show();
    connect( colors, SIGNAL( updateColors() ), this, SLOT( sendColors() ) );
@@ -319,7 +316,8 @@ void SM_Config::update_colors( void )
 
 void SM_Config::update_temps( void )
 {
-   SM3_Temps* temps = new SM3_Temps( server, settings, data );  
+   //SM3_Temps* temps = new SM3_Temps( server, settings, data );  
+   SM3_Temps* temps = new SM3_Temps( mainWindow );  
    temps->setWindowModality( Qt::WindowModal );  
    temps->show();
    connect( temps, SIGNAL( updateTemps() ), this, SLOT( sendTemps() ) );

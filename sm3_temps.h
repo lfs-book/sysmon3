@@ -4,15 +4,16 @@
 
 #include "sm3_widgets.h"
 #include "sm3_config.h"
+#include "sysmon3.h"
 
 //!  A class to allow the user to select a customized font.
-class SM3_Temps : public QFrame, public SM_Widgets
+class SM3_Temps : public QFrame
 {
   Q_OBJECT
   
   public:
     //*! \brief Construct the window for font selection
-    SM3_Temps( QString, QSettings*, QString );
+    SM3_Temps( sysmon3* parent );
     
     //! \brief A null destructor.
     ~SM3_Temps() {};
@@ -21,6 +22,9 @@ class SM3_Temps : public QFrame, public SM_Widgets
     void updateTemps( void );
 
   private:
+    sysmon3*     mainWindow;
+    SM_Widgets*  widgets;
+
     QSettings*   settings;
     QString      server;
     QString      data;

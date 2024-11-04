@@ -24,13 +24,12 @@ class SM_Config : public QFrame
 
 public:
 
-   SM_Config( QString, QSettings*, QString, QWidget* = nullptr );
-   SM_Config( sysmon3* parent = nullptr );
+   SM_Config( sysmon3* parent );
    ~SM_Config() {};
   
    SM_Widgets* widgets;
 
-   sysmon3* main;
+   sysmon3* mainWindow;
 
 private:
    QSettings*   settings;

@@ -3,19 +3,28 @@
 #include "sm3_temps.h"
 #include "udp.h"
 
-SM3_Temps::SM3_Temps( QString system, QSettings* baseSettings, QString dta ) 
+//SM3_Temps::SM3_Temps( QString system, QSettings* baseSettings, QString dta ) 
+SM3_Temps::SM3_Temps( sysmon3* parent )
 {
-   server   = system;
-   settings = baseSettings;
-   data     = dta;
+              mainWindow = parent;
+              server     = parent->server;
+              settings   = &parent->settings;
+              data       = parent->data;
+  
+   QString    familyKey  = server + "-fontFamily";
+   QString    family     = settings->value( familyKey, "DejaVu Sans" ).toString();
 
-   // Set up widgets
-   setWidgetData( server, settings );
+   QString    sizeKey    = server + "-fontSize";
+   int        fontSize   = settings->value( sizeKey, 12 ).toInt();
+
+   QFont      oldfont    = QFont( family, fontSize );
+    
+              widgets    = new SM_Widgets( oldfont );
+
+
 
    // Get current font; second parameter is default
-   QString family  = settings->value( server + "-fontFamily", "DejaVu Sans" ).toString();
-   int     size    = settings->value( server + "-fontSize"  , 12 ).toInt();
-   QFont   font    = QFont( family, size, QFont::Normal );
+   QFont   font    = QFont( family, fontSize, QFont::Normal );
 
    // Frame layout
    setWindowTitle( "Temperature Selection Dialog" );
@@ -29,10 +38,10 @@ SM3_Temps::SM3_Temps( QString system, QSettings* baseSettings, QString dta )
    int row = 0;
    tempsLayout = new QGridLayout();
 
-   QLabel* lblInterface = sm_banner( "Interface" );
-   QLabel* lblSensor    = sm_banner( "Sensor" );
-   QLabel* lblSelected  = sm_banner( "Selected" );
-   QLabel* lblLabel     = sm_banner( "Label" );
+   QLabel* lblInterface = widgets->sm_banner( "Interface" );
+   QLabel* lblSensor    = widgets->sm_banner( "Sensor" );
+   QLabel* lblSelected  = widgets->sm_banner( "Selected" );
+   QLabel* lblLabel     = widgets->sm_banner( "Label" );
    
    tempsLayout->addWidget( lblInterface, row,   0 );
    tempsLayout->addWidget( lblSensor,    row,   1 );
@@ -59,11 +68,11 @@ SM3_Temps::SM3_Temps( QString system, QSettings* baseSettings, QString dta )
        // Check with settings to see if the checkbox is should be set
        // and the label cusomized
       
-                   lblInterface = sm_label( interface );
-                   lblSensor    = sm_label( sensor );
+                   lblInterface = widgets->sm_label( interface );
+                   lblSensor    = widgets->sm_label( sensor );
         QCheckBox* cbBox        = new QCheckBox();
                    cbBox->setFont( font );
-        QLineEdit* leLabel      = sm_lineedit( sensor, 0 );
+        QLineEdit* leLabel      = widgets->sm_lineedit( sensor, 0 );
 
         // See if we have the entry in settings
         QString    key          = interface + "," + sensor;
@@ -88,13 +97,13 @@ SM3_Temps::SM3_Temps( QString system, QSettings* baseSettings, QString dta )
    }
    
    // Buttons
-   pb_apply = sm_pushbutton( tr( "Apply" ) );
+   pb_apply = widgets->sm_pushbutton( tr( "Apply" ) );
    connect( pb_apply, SIGNAL( clicked() ), SLOT( apply() ) );
 
    //pb_help = sm_pushbutton( tr( "Help" ) );
    //connect( pb_help, SIGNAL( clicked() ), SLOT( help() ) );
 
-   pb_exit = sm_pushbutton( tr( "Exit" ) );
+   pb_exit = widgets->sm_pushbutton( tr( "Exit" ) );
    connect( pb_exit, SIGNAL( clicked() ), SLOT( close() ) );
 
    QBoxLayout* buttons = new QHBoxLayout();

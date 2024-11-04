@@ -2,17 +2,34 @@
 #include "sysmon3.h"
 #include "sm3_font.h"
 
-SM_Color::SM_Color( QString system, QSettings* baseSettings ) 
+//SM_Color::SM_Color( QString system, QSettings* baseSettings ) 
+SM_Color::SM_Color( sysmon3* parent )
 {
-   server   = system;
-   settings = baseSettings;
+//   server   = system;
+//   settings = baseSettings;
 
    // Set up widgets
-   setWidgetData( server, settings );
+//   setWidgetData( server, settings );
+
+              mainWindow = parent;
+              server     = parent->server;
+              settings   = &parent->settings;
+
+   QString    familyKey  = server + "-fontFamily";
+   QString    family     = settings->value( familyKey, "DejaVu Sans" ).toString();
+
+   QString    sizeKey    = server + "-fontSize";
+   int        fontSize   = settings->value( sizeKey, 12 ).toInt();
+
+   QFont      oldfont    = QFont( family, fontSize );
+
+              widgets    = new SM_Widgets( oldfont );
+
+
 
    // Get current font; second parameter is default
-   QString family  = settings->value( server + "-fontFamily", "DejaVu Sans" ).toString();
-   int     size    = settings->value( server + "-fontSize"  , 12 ).toInt();
+   //QString family  = settings->value( server + "-fontFamily", "DejaVu Sans" ).toString();
+   //int     size    = settings->value( server + "-fontSize"  , 12 ).toInt();
    bool    checked = settings->value( server + "-fontBold"  , false ).toBool();
    int     weight  = checked ? QFont::Bold : QFont::Normal;
 
@@ -25,64 +42,64 @@ SM_Color::SM_Color( QString system, QSettings* baseSettings )
    // Label color
    QGridLayout* labelLayout = new QGridLayout();
 
-   pb_label_color = sm_pushbutton( tr( "Change\nLabel Color" ) );
+   pb_label_color = widgets->sm_pushbutton( tr( "Change\nLabel Color" ) );
    labelLayout->addWidget( pb_label_color, 0, 0 );
    connect( pb_label_color, SIGNAL( clicked() ), SLOT( label_color() ) );
 
-   pb_label_background = sm_pushbutton( tr( "Change\nLabel Background" ) );
+   pb_label_background = widgets->sm_pushbutton( tr( "Change\nLabel Background" ) );
    labelLayout->addWidget( pb_label_background, 0 , 1 );
    connect( pb_label_background, SIGNAL( clicked() ), SLOT( label_background() ) );
 
-   sample_label = sm_label( "Sample Label" );
-   sample_label->setFont( QFont( family, size, weight ) );
+   sample_label = widgets->sm_label( "Sample Label" );
+   sample_label->setFont( QFont( family, fontSize, weight ) );
    labelLayout->addWidget( sample_label, 0, 2 );
 
    // Data color
-   pb_data_color = sm_pushbutton( tr( "Change\nData Color" ) );
+   pb_data_color = widgets->sm_pushbutton( tr( "Change\nData Color" ) );
    labelLayout->addWidget( pb_data_color, 1, 0 );
    connect( pb_data_color, SIGNAL( clicked() ), SLOT( data_color() ) );
 
-   pb_data_background = sm_pushbutton( tr( "Change\nData Background" ) );
+   pb_data_background = widgets->sm_pushbutton( tr( "Change\nData Background" ) );
    labelLayout->addWidget( pb_data_background, 1, 1 );
    connect( pb_data_background, SIGNAL( clicked() ), SLOT( data_background() ) );
 
-   sample_data = sm_label( "Sample Data" );
-   sample_data->setFont( QFont( family, size, weight ) );
+   sample_data = widgets->sm_label( "Sample Data" );
+   sample_data->setFont( QFont( family, fontSize, weight ) );
    labelLayout->addWidget( sample_data, 1, 2 );
 
    //topbox->addLayout( labelLayout );
 
    // ProgressBar color
-   pb_progress_color = sm_pushbutton( tr( "Change\nProgress Color" ) );
+   pb_progress_color = widgets->sm_pushbutton( tr( "Change\nProgress Color" ) );
    labelLayout->addWidget( pb_progress_color, 2, 0 );
    connect( pb_progress_color, SIGNAL( clicked() ), SLOT( progress_color() ) );
 
-   pb_progress_background = sm_pushbutton( tr( "Change\nProgress Background" ) );
+   pb_progress_background = widgets->sm_pushbutton( tr( "Change\nProgress Background" ) );
    labelLayout->addWidget( pb_progress_background, 2, 1 );
    connect( pb_progress_background, SIGNAL( clicked() ), SLOT( progress_background() ) );
 
    sample_progress = new QProgressBar();
    sample_progress->setRange( 0, 100 );
    sample_progress->setValue( 75 );
-   sample_progress->setFont( QFont( family, size, weight ) );
+   sample_progress->setFont( QFont( family, fontSize, weight ) );
    labelLayout->addWidget( sample_progress, 2, 2 );
 
    topbox->addLayout( labelLayout );
 
    // Default
 
-   pb_default = sm_pushbutton( tr( "Set Default Colors" ) );
+   pb_default = widgets->sm_pushbutton( tr( "Set Default Colors" ) );
    connect( pb_default, SIGNAL( clicked() ), SLOT( setDefault() ) );
    topbox->addWidget( pb_default );
    
    // Buttons
-   pb_apply = sm_pushbutton( tr( "Apply" ) );
+   pb_apply = widgets->sm_pushbutton( tr( "Apply" ) );
    connect( pb_apply, SIGNAL( clicked() ), SLOT( apply() ) );
 
    //pb_help = sm_pushbutton( tr( "Help" ) );
    //connect( pb_help, SIGNAL( clicked() ), SLOT( help() ) );
 
-   pb_exit = sm_pushbutton( tr( "Exit" ) );
+   pb_exit = widgets->sm_pushbutton( tr( "Exit" ) );
    connect( pb_exit, SIGNAL( clicked() ), SLOT( close() ) );
 
    QBoxLayout* buttons = new QHBoxLayout();
