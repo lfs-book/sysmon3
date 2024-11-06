@@ -310,26 +310,33 @@ void sysmon3::setup_temps()
 
 void sysmon3::parse_data()
 {
-   if ( data == "Timeout" )
+   static int timeoutCount = 0;
+
+      if ( data == "Timeout" )
    {
-      QMessageBox msgBox( this );
-      msgBox.setText( "The sysmond server does not seem to be running. Retry?" );
+      timeoutCount++;
 
-      //QAbstractButton* retryButton = 
-         msgBox.addButton( "Retry", QMessageBox::YesRole );
-      
-      QAbstractButton* exitButton =
-         msgBox.addButton( "Exit",  QMessageBox::NoRole );
-      
-      msgBox.exec();
+      if ( timeoutCount > 2 )  // Three timeouts in a row is a problem
+      {
+         QMessageBox msgBox( this );
+         msgBox.setText( "The sysmond server does not seem to be running. Retry?" );
 
-//qDebug() << "msgBox.clickedButton:" << msgBox.clickedButton()->text();
+         //QAbstractButton* retryButton =
+            msgBox.addButton( "Retry", QMessageBox::YesRole );
 
-      if ( msgBox.clickedButton() == exitButton )
-         exit( EXIT_FAILURE );
-      else 
-         return;
+         QAbstractButton* exitButton =
+            msgBox.addButton( "Exit",  QMessageBox::NoRole );
+
+         msgBox.exec();
+
+         if ( msgBox.clickedButton() == exitButton )
+            exit( EXIT_FAILURE );
+      }
+
+      return;
    }
+
+   timeoutCount = 0;  // If we get here, any timeout cleared.
    
    QStringList lines     = data.split( '\n', Qt::SkipEmptyParts );
    QStringList basicInfo = lines.at( 0 ).split( ';' );
