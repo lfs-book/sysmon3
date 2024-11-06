@@ -21,7 +21,7 @@ SM_Config::SM_Config( sysmon3* parent )
                         
               widgets    = new SM_Widgets( oldfont ); 
 
-   setWindowTitle( "sysmon-qt Configuration" );
+   setWindowTitle( "sysmon3 Configuration" );
 
    // Directories
    

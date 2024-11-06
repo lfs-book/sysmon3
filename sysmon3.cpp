@@ -624,6 +624,10 @@ void sysmon3::updateLayout()
    setup_temps  ();
 
    update();
+   
+   int refresh = settings.value( server + "-refreshInterval", "1" ).toInt();
+
+   timer->setInterval( refresh * 1000 );  // Set timer interval in milliseconds
    timer->start();  
    tick = 0;
 }     
