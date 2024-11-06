@@ -39,6 +39,7 @@ private:
       QString server;
       QString date;
       QString time;
+      QString tz;
       quint64 uptime;
       QString load;
       qreal   cpuPercent;

@@ -343,7 +343,7 @@ void sysmon3::parse_data()
 
    serverData.server     = basicInfo.at( 0 );
    
-   // Parse "time:Sun Oct  6 14:31:31 2024"
+   // Parse "time:Sun Oct  6 14:31:31 2024 CST"
    QString s             = basicInfo.at( 1 );
    QStringList items     = s.split( " ", Qt::SkipEmptyParts);
 
@@ -356,6 +356,7 @@ void sysmon3::parse_data()
                            items.at( 4 );
 
    serverData.time       = items.at( 3 );
+   serverData.tz         = items.at( 5 );
 
    // Parse "uptime:10358266.36";
    QString     seconds   = basicInfo.at( 2 ).split( ':' ).at( 1 );;
@@ -512,9 +513,20 @@ void sysmon3::update_time()
 
    // Get the time format 
    QString format = settings.value( server + "-timeFormat", "HH:mm:ss" ).toString();
-   
+
+   QString timeString;
+
+   if ( format.contains( QChar( 't' ) ) )
+   {
+      format.remove( QChar( 't' ) );  // Don't use the clients tz
+      format.remove( QChar( ' ' ) );  // and remove any spaces
+      timeString = time.toString( format ) + " " + serverData.tz;
+   }
+   else
+      timeString = time.toString( format );
+
    // Do the update
-   lbl_time->setText( time.toString( format ) );
+   lbl_time->setText( timeString );
 }
 
 void sysmon3::update_date()
