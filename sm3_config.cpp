@@ -35,6 +35,26 @@ SM_Config::SM_Config( sysmon3* parent )
    int row = 0;
    QGridLayout* mainEntries = new QGridLayout();
 
+   // refresh interval
+   int refresh = settings->value( server + "-refreshInterval", "1" ).toInt();
+
+   lbl_refresh = widgets->sm_label( tr( "Refresh Interval:" ) );
+   
+   SBrefresh   = widgets->sm_spinBox( refresh );
+   SBrefresh->setRange( 1, 9 );
+
+   PBrefresh   = widgets->sm_pushbutton( tr( "Help" ) );
+
+   lbl_refresh->setFont( oldfont );
+   SBrefresh  ->setFont( oldfont );
+   PBrefresh  ->setFont( oldfont );
+
+   connect( PBrefresh, SIGNAL( clicked() ), this, SLOT( refresh_help() ) );
+
+   mainEntries->addWidget( lbl_refresh, row,   0 );
+   mainEntries->addWidget( SBrefresh,   row,   1 );
+   mainEntries->addWidget( PBrefresh,   row++, 2 );
+
    // time
    QString timeFormat  = settings->value( server + "-timeFormat", "HH:mm:ss" ).toString();
    bool    timeChecked = settings->value( server + "-useTime",    true       ).toBool();
@@ -186,6 +206,15 @@ SM_Config::SM_Config( sysmon3* parent )
 //{
 //  showhelp.show_help( "config.html" );
 //}
+
+// Display refresh help info
+void SM_Config::refresh_help( void )
+{
+   QString* text = new QString(
+         "Set this value to the desired refresh interval.\n" );
+
+   msg_box( text, 60 );
+}
 
 // Display time help info
 void SM_Config::time_help( void )
@@ -343,15 +372,19 @@ void SM_Config::update_local( void )
    CBcpuBar->setFont( font );
    CBmemory->setFont( font );
 
+   PBrefresh->setFont( font );
    PBtime  ->setFont( font );
    PBdate  ->setFont( font );
    PBuptime->setFont( font );
    PBcpu   ->setFont( font );
    PBmemory->setFont( font );
 
+   SBrefresh->setFont( font );
+
    LEtime  ->setFont( font );
    LEdate  ->setFont( font );
 
+   lbl_refresh->setFont( font );
    lbl_font ->setFont( font );
    lbl_color->setFont( font );
    lbl_temps->setFont( font );
@@ -359,6 +392,8 @@ void SM_Config::update_local( void )
 
 void SM_Config::apply( void )
 {
+   settings->setValue( server + "-refreshInterval", SBrefresh->value() );
+
    settings->setValue( server + "-useTime",   CBtime->isChecked()   );
    settings->setValue( server + "-useDate",   CBdate->isChecked()   );
    settings->setValue( server + "-useUptime", CBuptime->isChecked() );

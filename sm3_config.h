@@ -37,6 +37,7 @@ private:
    QString      data;
 
    QLabel*      version;
+   QLabel*      lbl_refresh;
    QLabel*      lbl_font;
    QLabel*      lbl_color;
    QLabel*      lbl_temps;
@@ -47,6 +48,7 @@ private:
    QPushButton* pb_exit;
    
    // Help pushbuttons
+   QPushButton* PBrefresh;
    QPushButton* PBtime;
    QPushButton* PBdate;
    QPushButton* PBuptime;
@@ -61,6 +63,8 @@ private:
    QCheckBox*   CBcpuBar;
    QCheckBox*   CBmemory;
 
+   QSpinBox*    SBrefresh;
+
    QLineEdit*   LEtime;
    QLineEdit*   LEdate;
 
@@ -74,6 +78,7 @@ private slots:
   void update_font  ( void );
   void update_colors( void );
   void update_temps ( void );
+  void refresh_help ( void );
   void time_help    ( void );
   void date_help    ( void );
   void uptime_help  ( void );
