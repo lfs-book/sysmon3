@@ -2,35 +2,18 @@
 #include "sysmon3.h"
 #include "sm3_font.h"
 
-//SM_Color::SM_Color( QString system, QSettings* baseSettings ) 
-SM_Color::SM_Color( sysmon3* parent )
+SM_Color::SM_Color( SM_Settings* setngs )
 {
-//   server   = system;
-//   settings = baseSettings;
+              settingsPtr = setngs;
 
-   // Set up widgets
-//   setWidgetData( server, settings );
+   QString    family      = settingsPtr->value( "fontFamily" );
+   int        fontSize    = settingsPtr->value( "fontSize"   ).toInt();
 
-              mainWindow = parent;
-              server     = parent->server;
-              settings   = &parent->settings;
-
-   QString    familyKey  = server + "-fontFamily";
-   QString    family     = settings->value( familyKey, "DejaVu Sans" ).toString();
-
-   QString    sizeKey    = server + "-fontSize";
-   int        fontSize   = settings->value( sizeKey, 12 ).toInt();
-
-   QFont      oldfont    = QFont( family, fontSize );
-
-              widgets    = new SM_Widgets( oldfont );
-
-
+   QFont      oldfont     = QFont( family, fontSize );
+              widgetsPtr  = new SM_Widgets( oldfont );
 
    // Get current font; second parameter is default
-   //QString family  = settings->value( server + "-fontFamily", "DejaVu Sans" ).toString();
-   //int     size    = settings->value( server + "-fontSize"  , 12 ).toInt();
-   bool    checked = settings->value( server + "-fontBold"  , false ).toBool();
+   bool    checked = settingsPtr->value( "fontBold" ) == "true";
    int     weight  = checked ? QFont::Bold : QFont::Normal;
 
    // Frame layout
@@ -42,39 +25,37 @@ SM_Color::SM_Color( sysmon3* parent )
    // Label color
    QGridLayout* labelLayout = new QGridLayout();
 
-   pb_label_color = widgets->sm_pushbutton( tr( "Change\nLabel Color" ) );
+   pb_label_color = widgetsPtr->sm_pushbutton( tr( "Change\nLabel Color" ) );
    labelLayout->addWidget( pb_label_color, 0, 0 );
    connect( pb_label_color, SIGNAL( clicked() ), SLOT( label_color() ) );
 
-   pb_label_background = widgets->sm_pushbutton( tr( "Change\nLabel Background" ) );
+   pb_label_background = widgetsPtr->sm_pushbutton( tr( "Change\nLabel Background" ) );
    labelLayout->addWidget( pb_label_background, 0 , 1 );
    connect( pb_label_background, SIGNAL( clicked() ), SLOT( label_background() ) );
 
-   sample_label = widgets->sm_label( "Sample Label" );
+   sample_label = widgetsPtr->sm_label( "Sample Label" );
    sample_label->setFont( QFont( family, fontSize, weight ) );
    labelLayout->addWidget( sample_label, 0, 2 );
 
    // Data color
-   pb_data_color = widgets->sm_pushbutton( tr( "Change\nData Color" ) );
+   pb_data_color = widgetsPtr->sm_pushbutton( tr( "Change\nData Color" ) );
    labelLayout->addWidget( pb_data_color, 1, 0 );
    connect( pb_data_color, SIGNAL( clicked() ), SLOT( data_color() ) );
 
-   pb_data_background = widgets->sm_pushbutton( tr( "Change\nData Background" ) );
+   pb_data_background = widgetsPtr->sm_pushbutton( tr( "Change\nData Background" ) );
    labelLayout->addWidget( pb_data_background, 1, 1 );
    connect( pb_data_background, SIGNAL( clicked() ), SLOT( data_background() ) );
 
-   sample_data = widgets->sm_label( "Sample Data" );
+   sample_data = widgetsPtr->sm_label( "Sample Data" );
    sample_data->setFont( QFont( family, fontSize, weight ) );
    labelLayout->addWidget( sample_data, 1, 2 );
 
-   //topbox->addLayout( labelLayout );
-
    // ProgressBar color
-   pb_progress_color = widgets->sm_pushbutton( tr( "Change\nProgress Color" ) );
+   pb_progress_color = widgetsPtr->sm_pushbutton( tr( "Change\nProgress Color" ) );
    labelLayout->addWidget( pb_progress_color, 2, 0 );
    connect( pb_progress_color, SIGNAL( clicked() ), SLOT( progress_color() ) );
 
-   pb_progress_background = widgets->sm_pushbutton( tr( "Change\nProgress Background" ) );
+   pb_progress_background = widgetsPtr->sm_pushbutton( tr( "Change\nProgress Background" ) );
    labelLayout->addWidget( pb_progress_background, 2, 1 );
    connect( pb_progress_background, SIGNAL( clicked() ), SLOT( progress_background() ) );
 
@@ -87,19 +68,18 @@ SM_Color::SM_Color( sysmon3* parent )
    topbox->addLayout( labelLayout );
 
    // Default
-
-   pb_default = widgets->sm_pushbutton( tr( "Set Default Colors" ) );
+   pb_default = widgetsPtr->sm_pushbutton( tr( "Set Default Colors" ) );
    connect( pb_default, SIGNAL( clicked() ), SLOT( setDefault() ) );
    topbox->addWidget( pb_default );
    
    // Buttons
-   pb_apply = widgets->sm_pushbutton( tr( "Apply" ) );
+   pb_apply = widgetsPtr->sm_pushbutton( tr( "Apply" ) );
    connect( pb_apply, SIGNAL( clicked() ), SLOT( apply() ) );
 
    //pb_help = sm_pushbutton( tr( "Help" ) );
    //connect( pb_help, SIGNAL( clicked() ), SLOT( help() ) );
 
-   pb_exit = widgets->sm_pushbutton( tr( "Exit" ) );
+   pb_exit = widgetsPtr->sm_pushbutton( tr( "Exit" ) );
    connect( pb_exit, SIGNAL( clicked() ), SLOT( close() ) );
 
    QBoxLayout* buttons = new QHBoxLayout();
@@ -117,27 +97,44 @@ void SM_Color::setDefault( void )
 {
    QPalette p = sample_label->palette();
 
-   p.setColor( QPalette::Active,   QPalette::Window,     QColor( "#efefef" ) );
-   p.setColor( QPalette::Active,   QPalette::WindowText, QColor( "#000000" ) );
-   p.setColor( QPalette::Inactive, QPalette::Window,     QColor( "#efefef" ) );
-   p.setColor( QPalette::Inactive, QPalette::WindowText, QColor( "#000000" ) );
+   //  Get defaults from SM_Settings
+   QColor labelColor    = QColor( settingsPtr->getDefault( "labelColor"    ) );
+   QColor labelBg       = QColor( settingsPtr->getDefault( "labelBg"       ) );
+   QColor dataColor     = QColor( settingsPtr->getDefault( "dataColor"     ) );
+   QColor dataBg        = QColor( settingsPtr->getDefault( "dataBg"        ) );
+   QColor progressColor = QColor( settingsPtr->getDefault( "progressColor" ) );
+   QColor progressBg    = QColor( settingsPtr->getDefault( "progressBg"    ) );
 
-   p.setColor( QPalette::Active,   QPalette::Highlight,  QColor( "#308cc6" ) );
-   p.setColor( QPalette::Active,   QPalette::Base,       QColor( "#ffffff" ) );
-   p.setColor( QPalette::Inactive, QPalette::Highlight,  QColor( "#308cc6" ) );
-   p.setColor( QPalette::Inactive, QPalette::Base,       QColor( "#ffffff" ) );
+   // The Active group is used for the window that has keyboard focus.
+   p.setColor( QPalette::Active,   QPalette::Window,     dataBg        ); 
+   p.setColor( QPalette::Active,   QPalette::WindowText, dataColor     ); 
+   p.setColor( QPalette::Active,   QPalette::Highlight,  progressColor ); 
+   p.setColor( QPalette::Active,   QPalette::Base,       progressBg    );
 
-   sample_label   ->setPalette( p );
+   //The Inactive group is used for other windows.
+   p.setColor( QPalette::Inactive, QPalette::Window,     dataBg        );
+   p.setColor( QPalette::Inactive, QPalette::WindowText, dataColor     );
+   p.setColor( QPalette::Inactive, QPalette::Highlight,  progressColor );
+   p.setColor( QPalette::Inactive, QPalette::Base,       progressBg    );
+
    sample_data    ->setPalette( p );
    sample_progress->setPalette( p );
+
+   p.setColor( QPalette::Active,   QPalette::Window,     labelBg       ); 
+   p.setColor( QPalette::Active,   QPalette::WindowText, labelColor    ); 
+
+   p.setColor( QPalette::Inactive, QPalette::Window,     labelBg       );
+   p.setColor( QPalette::Inactive, QPalette::WindowText, labelColor    );
+
+   sample_label ->setPalette( p );
 }
 
 void SM_Color::label_color( void )
 {
    QPalette p = sample_label->palette();
-                                      // Background is QPalette::Window
-   QColor oldColor  = p.color( QPalette::Active, QPalette::WindowText);
-   QColor newColor  = QColorDialog::getColor(oldColor, this );
+                                      
+   QColor oldColor = p.color( QPalette::Active, QPalette::WindowText);
+   QColor newColor = QColorDialog::getColor(oldColor, this );
 
    if ( ! newColor.isValid() ) return;
 
@@ -149,9 +146,10 @@ void SM_Color::label_color( void )
 void SM_Color::label_background( void )
 {
    QPalette p = sample_label->palette();
-                                      // Background is QPalette::Window
-   QColor oldColor  = p.color( QPalette::Active, QPalette::Window);
-   QColor newColor  = QColorDialog::getColor(oldColor, this );
+
+   // Background is QPalette::Window
+   QColor oldColor = p.color( QPalette::Active, QPalette::Window);
+   QColor newColor = QColorDialog::getColor(oldColor, this );
 
    if ( ! newColor.isValid() ) return;
 
@@ -163,7 +161,7 @@ void SM_Color::label_background( void )
 void SM_Color::data_color( void )
 {
    QPalette p = sample_data->palette();
-                                      // Background is QPalette::Window
+   
    QColor oldColor  = p.color( QPalette::Active, QPalette::WindowText);
    QColor newColor  = QColorDialog::getColor(oldColor, this );
 
@@ -177,7 +175,7 @@ void SM_Color::data_color( void )
 void SM_Color::data_background( void )
 {
    QPalette p = sample_data->palette();
-                                      // Background is QPalette::Window
+  
    QColor oldColor  = p.color( QPalette::Active, QPalette::Window);
    QColor newColor  = QColorDialog::getColor(oldColor, this );
 
@@ -191,13 +189,13 @@ void SM_Color::data_background( void )
 void SM_Color::progress_color( void )
 {
    QPalette p = sample_progress->palette();
-                                      // Background is QPalette::Window
+ 
    QColor oldColor  = p.color( QPalette::Active, QPalette::WindowText);
    QColor newColor  = QColorDialog::getColor(oldColor, this );
 
    if ( ! newColor.isValid() ) return;
 
-   p.setColor( QPalette::Active,   QPalette::Highlight, newColor );//12
+   p.setColor( QPalette::Active,   QPalette::Highlight, newColor );
    p.setColor( QPalette::Inactive, QPalette::Highlight, newColor );
    sample_progress->setPalette( p );
 }
@@ -205,13 +203,13 @@ void SM_Color::progress_color( void )
 void SM_Color::progress_background( void )
 {
    QPalette p = sample_progress->palette();
-                                      // Background is QPalette::Window
+
    QColor oldColor  = p.color( QPalette::Active, QPalette::Window);
    QColor newColor  = QColorDialog::getColor(oldColor, this );
 
    if ( ! newColor.isValid() ) return;
 
-   p.setColor( QPalette::Active,   QPalette::Base, newColor ); //9
+   p.setColor( QPalette::Active,   QPalette::Base, newColor );
    p.setColor( QPalette::Inactive, QPalette::Base, newColor );
    sample_progress->setPalette( p );
 }
@@ -228,25 +226,25 @@ void SM_Color::apply()
    QColor   text       = p.color( QPalette::Active, QPalette::WindowText );
    QColor   background = p.color( QPalette::Active, QPalette::Window );
 
-   // Set color values in settings
-   settings->setValue( server + "-labelColor", text      .name() );
-   settings->setValue( server + "-labelBg"   , background.name() );
+   // Set color values in settingsPtr
+   settingsPtr->setValue( "labelColor", text      .name() );
+   settingsPtr->setValue( "labelBg"   , background.name() );
 
    p          = sample_data->palette();
    text       = p.color( QPalette::Active, QPalette::WindowText );
    background = p.color( QPalette::Active, QPalette::Window );
 
-   settings->setValue( server + "-dataColor", text.name()      );
-   settings->setValue( server + "-dataBg"   , background.name() );
+   settingsPtr->setValue( "dataColor", text.name()      );
+   settingsPtr->setValue( "dataBg"   , background.name() );
 
    p          = sample_progress->palette();
    text       = p.color( QPalette::Active, QPalette::Highlight );
    background = p.color( QPalette::Active, QPalette::Base );
 
-   settings->setValue( server + "-progressColor", text.name()      );
-   settings->setValue( server + "-progressBg"   , background.name() );
+   settingsPtr->setValue( "progressColor", text.name()      );
+   settingsPtr->setValue( "progressBg"   , background.name() );
 
-   settings->sync();
+   settingsPtr->sync();
    emit updateColors();
 }
 
@@ -258,14 +256,14 @@ void SM_Color::apply()
 
 void SM_Color::redraw( void )
 {
-   QString lblFg      = settings->value( server + "-labelColor",    "#ffffff").toString();
-   QString lblBg      = settings->value( server + "-labelBg",       "#999999").toString();
+   QString lblFg      = settingsPtr->value( "labelColor"    );
+   QString lblBg      = settingsPtr->value( "labelBg"       );
+                                                          
+   QString dataFg     = settingsPtr->value( "dataColor"     );
+   QString dataBg     = settingsPtr->value( "dataBg"        );
 
-   QString dataFg     = settings->value( server + "-dataColor",     "#efefef").toString();
-   QString dataBg     = settings->value( server + "-dataBg",        "#000000").toString();
-
-   QString progressFg = settings->value( server + "-progressColor", "#efefef").toString();
-   QString progressBg = settings->value( server + "-progressBg",    "#000000").toString();
+   QString progressFg = settingsPtr->value( "progressColor" );
+   QString progressBg = settingsPtr->value( "progressBg"    );
 
    QPalette p;
    p.setColor( QPalette::Active, QPalette::WindowText, QColor( lblFg ) );

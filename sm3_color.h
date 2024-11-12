@@ -16,7 +16,7 @@ class SM_Color : public QFrame
   
   public:
     //*! \brief Construct the window for font selection
-    SM_Color( sysmon3* parent );
+    SM_Color( SM_Settings* );
     
     //! \brief A null destructor.
     ~SM_Color() {};
@@ -25,8 +25,8 @@ class SM_Color : public QFrame
     void updateColors( void );
 
   private:
-    sysmon3*     mainWindow;
-    SM_Widgets*  widgets;
+    SM_Settings* settingsPtr;
+    SM_Widgets*  widgetsPtr;
 
     QSettings*   settings;
     QString      server;

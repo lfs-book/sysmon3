@@ -29,7 +29,7 @@ sysmon3::sysmon3( QString arg1 )
    setContextMenuPolicy( Qt::ActionsContextMenu );  // Add actions for right click
    setWindowTitle( tr( "sysmon3" ) );
 
-   // actions 
+   // Actions 
    QAction* configAction = new QAction( tr("Configuration"), this );
    configAction->setShortcut( Qt::Key_F1 );
    connect( configAction, SIGNAL(triggered()), this, SLOT( config() ) );
@@ -45,13 +45,8 @@ sysmon3::sysmon3( QString arg1 )
    connect( frameAction, &QAction::triggered, this, &sysmon3::changeFrame );
    addAction( frameAction );
 
-//   QAction* sizeAction = new QAction( tr("R&esize"), this );
-//   sizeAction->setShortcut( tr("Ctrl+R") );
-//   connect( sizeAction, &QAction::triggered, this, &sysmon3::changeSize );
-//   addAction( sizeAction );
-
    timer = new QTimer( this );
-   timer->setInterval( 1000 );  // Every second
+   timer->setInterval( 1000 );  // Every second by default
    connect(timer, &QTimer::timeout, this, QOverload<>::of(&sysmon3::update));
    //timer->start();  // Do this later
 
@@ -60,6 +55,10 @@ sysmon3::sysmon3( QString arg1 )
    if ( ! arg1.isEmpty() )
    {
       // If server has been set up, don't run setup()
+      // We can't use SM_Settings yet because we don't know the server   
+
+      QSettings settings;  // Just use this temporarily 
+
       int size = settings.beginReadArray( "hosts" );
       if ( size > 0 )
       {
@@ -81,17 +80,18 @@ sysmon3::sysmon3( QString arg1 )
      s->show();
 
      // The main window starts when the user presses config's "Start" button
-     connect( s, SIGNAL( showMainWindow( QString ) ), this, SLOT( showMain( QString ) ) );
+     connect( s,    SIGNAL( showMainWindow( QString ) ), 
+              this, SLOT  ( showMain      ( QString ) ) );
    }
    else 
-      showMain( arg1 );
+      showMain( arg1 );  // arg1 is the sever name on the command line
 }
 
 void sysmon3::config( void )
 {  
-   SM_Config* w = new SM_Config( this );
-   //SM_Config* w = new SM_Config( server, &settings, data, this );
+   SM_Config* w = new SM_Config( settingsPtr, data, this->geometry() );
    w->show();
+
    connect( w, SIGNAL( updateEntries() ), this, SLOT( updateLayout() ) );
    connect( w, SIGNAL( updateFonts  () ), this, SLOT( updateFont()   ) );
    connect( w, SIGNAL( updateColors () ), this, SLOT( updateColor()  ) );
@@ -100,23 +100,25 @@ void sysmon3::config( void )
 
 sysmon3::~sysmon3()
 {
+qDebug() << "Destructor ~sysmon3()";
    position = this->pos();
-   settings.setValue( server + "-positionX", QString::number( position.x() ) );
-   settings.setValue( server + "-positionY", QString::number( position.y() ) );
-   settings.sync();
+   settingsPtr->setValue( "positionX", QString::number( position.x() ) );
+   settingsPtr->setValue( "positionY", QString::number( position.y() ) );
+   settingsPtr->sync();
 }
 
 // This is a SLOT, but perhaps the slot should just be setup_all
 void sysmon3::showMain( QString server1 )
 {
-   server = server1;
+   server      = server1;
+   settingsPtr = new SM_Settings( server );
 
    // Start layout   
    layout = new QVBoxLayout; 
 
-   // hostname  we don't have the name yet
+   // hostname  - we don't have the name yet
    lbl_hostname = banner( serverData.server, 0, QFont::Bold );
-   lbl_hostname->setPalette( banner_palette );
+   lbl_hostname->setPalette( banner_palette );  // And we don't have a palette
    layout->addWidget( lbl_hostname );
 
    setup_all( server );
@@ -130,7 +132,7 @@ void sysmon3::setup_all( QString server )
    parse_data();
 
    // Use server name to initialize saved data
-   get_settings( server );
+   get_settings();
 
    // Workaround before first fetch of data
    lbl_hostname->setText( serverData.server );
@@ -143,7 +145,6 @@ void sysmon3::setup_all( QString server )
    setup_memory();
    setup_temps();
    updateFont();
-
    // End of layout
 
    QWidget* window = new QWidget();
@@ -151,10 +152,10 @@ void sysmon3::setup_all( QString server )
 
    setCentralWidget( window );
 
-   if ( settings.contains( server + "-positionX" ) )
+   if ( settingsPtr->contains( "positionX" ) )
    {
-      int x = settings.value( server + "-positionX" ).toInt();
-      int y = settings.value( server + "-positionY" ).toInt();
+      int x = settingsPtr->value( "positionX" ).toInt();
+      int y = settingsPtr->value( "positionY" ).toInt();
       position = QPoint( x, y );
       this->move( position );
    }
@@ -168,7 +169,7 @@ void sysmon3::setup_time()
 {
    lbl_time = nullptr;
 
-   if ( ! settings.value( server + "-useTime", true ).toBool() ) return;
+   if ( settingsPtr->value( "useTime" ) != "true" ) return;
    lbl_time = label ( serverData.time );
    layout->addWidget( lbl_time );
 }
@@ -176,7 +177,8 @@ void sysmon3::setup_time()
 void sysmon3::setup_date()
 {
    lbl_date = nullptr;
-   if ( ! settings.value( server + "-useDate", true ).toBool() ) return;
+
+   if ( settingsPtr->value( "useDate" ) != "true" )  return;
 
    lbl_date = label( serverData.date );
    layout->addWidget( lbl_date );
@@ -186,7 +188,7 @@ void sysmon3::setup_uptime()
 {
    lbl_uptime = nullptr;
 
-   if ( ! settings.value( server + "-useUptime", true ).toBool() ) return;
+   if ( settingsPtr->value( "useUptime" ) != "true" ) return;
 
    uint secs    = serverData.uptime;
    uint minutes = (secs / 60  ) % 60;
@@ -204,8 +206,8 @@ void sysmon3::setup_uptime()
 
 void sysmon3::setup_cpuLoad()
 {
-   bool useCPU    = settings.value( server + "-useCPU",    true ).toBool();
-   bool useCPUbar = settings.value( server + "-useCPUbar", true ).toBool();
+   bool useCPU    = settingsPtr->value( "useCPU" )    == "true";
+   bool useCPUbar = settingsPtr->value( "useCPUbar" ) == "true";
 
    lbl_cpu = nullptr;
 
@@ -225,8 +227,8 @@ void sysmon3::setup_cpuLoad()
       // Set palette
       QPalette p = load->palette();
 
-      QString color = settings.value( server + "-progressColor", "#308cc6" ).toString();
-      QString bg    = settings.value( server + "-progressBg",    "#ffffff" ).toString();
+      QString color = settingsPtr->value( "progressColor" );
+      QString bg    = settingsPtr->value( "progressBg"    );
 
       p.setColor( QPalette::Active,   QPalette::Highlight, QColor( color ) );
       p.setColor( QPalette::Active,   QPalette::Base,      QColor( bg    ) );
@@ -244,7 +246,8 @@ void sysmon3::setup_cpuLoad()
 void sysmon3::setup_memory()
 {
    lbl_memory = nullptr;
-   if ( ! settings.value( server + "-useMemory", true ).toBool() ) return;
+   if ( settingsPtr->value( "useMemory" ) != "true" ) return;
+
 
    memory = new QProgressBar();
    memory->setRange( 0, 100 );
@@ -254,8 +257,8 @@ void sysmon3::setup_memory()
    // set palette for memory
    QPalette p = memory->palette();
 
-   QString color = settings.value( server + "-progressColor", "#308cc6" ).toString();
-   QString bg    = settings.value( server + "-progressBg",    "#ffffff" ).toString();
+   QString color = settingsPtr->value( "progressColor" );
+   QString bg    = settingsPtr->value( "progressBg"    );
 
    p.setColor( QPalette::Active,   QPalette::Highlight, QColor( color ) );
    p.setColor( QPalette::Active,   QPalette::Base,      QColor( bg    ) );
@@ -270,20 +273,12 @@ void sysmon3::setup_memory()
 
 void sysmon3::setup_temps()
 {
-   tempConfig.clear();
    tempsLayout = nullptr;
 
-   // Get temperature settings in the format 'interface + "," + sensor + "," + label'
-   QString group = QString( server + "-temperatures" );
-   
-   settings.beginGroup( group );
-     QStringList keys = settings.childKeys();
-     foreach (const QString &key, keys)
-       tempConfig << settings.value( key ).toString();
-   settings.endGroup();
+   QStringList tempConfig = settingsPtr->readGroup( "temperatures" );
 
    // If null, return
-   if ( tempConfig.size() == 0 ) return;  // tempConfig is a QStringList
+   if ( tempConfig.size() == 0 ) return;  
 
    // Create tempsLayout 
    tempsLayout = new QGridLayout();
@@ -379,12 +374,11 @@ void sysmon3::parse_data()
    {
       QStringList interface     = lines[ i ].split( ';' );
       if ( interface[ 0 ] != "interface" )
-      {
-         //qDebug() << "++++Trying to parse line[" << i << "] ->" << lines[ i ]; 
          continue;
-      }
+      
       QStringList tempData      = interface[ 1 ].split( ',' );
       QString     interfaceName = tempData[ 0 ];
+
       for ( int j = 1; j < tempData.size(); j++ )
       {
          QStringList sensorData     = tempData[ j ].split( ':' );
@@ -394,21 +388,20 @@ void sysmon3::parse_data()
    }
 }
 
-void sysmon3::get_settings( QString server )
+void sysmon3::get_settings( void )
 {
    setFrame();  // Off by default
 
    // Fonts
-   font_family = settings.value( server + "-fontFamily", "DejaVu Sans" ).toString();
-   font_size   = settings.value( server + "-fontSize"  , 12 ).toInt();
+   font_family = settingsPtr->value( "fontFamily" );
+   font_size   = settingsPtr->value( "fontSize"   ).toInt();
    font_normal = QFont( font_family, font_size );
 
    // Palettes
    QPalette p;
    
-   QString lblColor = settings.value( server + "-labelColor", "#ffffff" ).toString();
-   QString lblBg    = settings.value( server + "-labelBg",    "#999999" ).toString();
-//qDebug() << "server: " << server << "; lblColor: " << lblColor << "; lblBg:" << lblBg;
+   QString lblColor = settingsPtr->value( "labelColor" );
+   QString lblBg    = settingsPtr->value( "labelBg"    );
    
    p.setColor( QPalette::Active,   QPalette::WindowText, QColor( lblColor ) );
    p.setColor( QPalette::Active,   QPalette::Window,     QColor( lblBg    ) );
@@ -417,8 +410,8 @@ void sysmon3::get_settings( QString server )
    
    banner_palette = p;
    
-   QString dataColor = settings.value( server + "-dataColor", "#000000" ).toString();
-   QString dataBg    = settings.value( server + "-dataBg",    "#efefef" ).toString();
+   QString dataColor = settingsPtr->value( "dataColor" );
+   QString dataBg    = settingsPtr->value( "dataBg"    ); 
    
    p.setColor( QPalette::Active,   QPalette::WindowText, QColor( dataColor ) );
    p.setColor( QPalette::Active,   QPalette::Window,     QColor( dataBg    ) );
@@ -442,13 +435,6 @@ void sysmon3::changeFrame()
    setFrame();
    show();
 }
-
-//void sysmon3::changeSize()
-//{     
-//   mFrame = ! mFrame;
-//   setFixedSize( 500, 500 );
-//   show();
-//}
 
 // banner ( defaults to Bold and changes text colors )
 QLabel* sysmon3::banner( const QString& labelString, int fontAdjust, int weight )
@@ -474,7 +460,7 @@ QLabel* sysmon3::label( const QString& labelString, int fontAdjust, int weight )
    newLabel->setMargin    ( 2 );
    newLabel->setAutoFillBackground( true );
    
-   bool bold   = settings.value( server + "+fontBold", false ).toBool();
+   bool bold   = settingsPtr->value( "fontBold" ) == "true";
         weight = bold ? QFont::Bold : QFont::Normal;
    
    QFont labelFont = QFont( font_family, font_size + fontAdjust,  weight );
@@ -512,7 +498,7 @@ void sysmon3::update_time()
    QTime       time = QTime( t.at(0).toInt(), t.at(1).toInt(), t.at(2).toInt() );
 
    // Get the time format 
-   QString format = settings.value( server + "-timeFormat", "HH:mm:ss" ).toString();
+   QString format = settingsPtr->value( "timeFormat" );
 
    QString timeString;
 
@@ -534,7 +520,7 @@ void sysmon3::update_date()
    if ( lbl_date == nullptr ) return;
 
    // Get the date format
-   QString format = settings.value( server + "-dateFormat", "ddd d MMM" ).toString();
+   QString format = settingsPtr->value( "dateFormat" );
 
    // Create a QDate() structure so it can be formatted
    // Input is  dow, month day, year such ad  "Mon Oct 7 2024"
@@ -573,8 +559,8 @@ void sysmon3::update_uptime()
 
 void sysmon3::update_cpuLoad()
 {
-   bool useCPU    = settings.value( server + "-useCPU",    true ).toBool();
-   bool useCPUbar = settings.value( server + "-useCPUbar", true ).toBool();
+   bool useCPU    = settingsPtr->value( "useCPU"    ) == "true";
+   bool useCPUbar = settingsPtr->value( "useCPUbar" ) == "true"; 
 
    if ( useCPU )
       lbl_loads->setText( serverData.load );
@@ -624,8 +610,8 @@ void sysmon3::updateLayout()
    setup_temps  ();
 
    update();
-   
-   int refresh = settings.value( server + "-refreshInterval", "1" ).toInt();
+
+   int refresh = settingsPtr->value( "refreshInterval" ).toInt();
 
    timer->setInterval( refresh * 1000 );  // Set timer interval in milliseconds
    timer->start();  
@@ -660,11 +646,11 @@ void sysmon3::delete_all( void )
 
 void sysmon3::updateFont( void )
 {
-   font_family = settings.value( server + "-fontFamily", "DejaVu Sans" ).toString();
-   font_size   = settings.value( server + "-fontSize"  , 12 ).toInt();
+   font_family = settingsPtr->value( "fontFamily" );
+   font_size   = settingsPtr->value( "fontSize"   ).toInt();
    font_normal = QFont( font_family, font_size );
 
-   bool bold   = settings.value( server + "-fontBold"  , false ).toBool();
+   bool bold   = settingsPtr->value( "fontBold" ) == "true";
    QFont::Weight weight = bold ? QFont::Bold : QFont::Normal;
    font_normal.setWeight( weight );
 
@@ -755,8 +741,8 @@ void sysmon3::set_palettes( void )
 {
    QPalette p;
 
-   QString lblColor = settings.value( server + "-labelColor", "#ffffff" ).toString();
-   QString lblBg    = settings.value( server + "-labelBg",    "#999999" ).toString();
+   QString lblColor = settingsPtr->value( "labelColor" );
+   QString lblBg    = settingsPtr->value( "labelBg" );
 
    p.setColor( QPalette::Active,   QPalette::WindowText, QColor( lblColor ) );
    p.setColor( QPalette::Active,   QPalette::Window,     QColor( lblBg    ) );
@@ -765,8 +751,8 @@ void sysmon3::set_palettes( void )
 
    banner_palette = p;
 
-   QString dataColor = settings.value( server + "-dataColor", "#000000" ).toString();
-   QString dataBg    = settings.value( server + "-dataBg",    "#efefef" ).toString();
+   QString dataColor = settingsPtr->value( "dataColor" );
+   QString dataBg    = settingsPtr->value( "dataBg" );
 
    p.setColor( QPalette::Active,   QPalette::WindowText, QColor( dataColor ) );
    p.setColor( QPalette::Active,   QPalette::Window,     QColor( dataBg    ) );
@@ -775,8 +761,8 @@ void sysmon3::set_palettes( void )
 
    data_palette = p;
 
-   QString color = settings.value( server + "-progressColor", "#308cc6" ).toString();
-   QString bg    = settings.value( server + "-progressBg",    "#ffffff" ).toString();
+   QString color = settingsPtr->value( "progressColor" );
+   QString bg    = settingsPtr->value( "progressBg" );
 
    p.setColor( QPalette::Active,   QPalette::Highlight, QColor( color ) );
    p.setColor( QPalette::Active,   QPalette::Base,      QColor( bg    ) );

@@ -13,7 +13,7 @@ class SM3_Temps : public QFrame
   
   public:
     //*! \brief Construct the window for font selection
-    SM3_Temps( sysmon3* parent );
+    SM3_Temps( SM_Settings*, QString );
     
     //! \brief A null destructor.
     ~SM3_Temps() {};
@@ -22,11 +22,8 @@ class SM3_Temps : public QFrame
     void updateTemps( void );
 
   private:
-    sysmon3*     mainWindow;
-    SM_Widgets*  widgets;
-
-    QSettings*   settings;
-    QString      server;
+    SM_Widgets*  widgetsPtr;
+    SM_Settings* settingsPtr;
     QString      data;
 
     QGridLayout* tempsLayout;

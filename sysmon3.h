@@ -8,9 +8,10 @@
 #include <QPoint>
 #include <QProgressBar>
 #include <QSettings>
-#include <QListWidget>  // needed?
+#include <QListWidget>
 
-#include <udp.h>
+#include "udp.h"
+#include "sm3_settings.h"
 
 class sysmon3 : public QMainWindow
 {
@@ -20,10 +21,8 @@ public:
    sysmon3( QString );
    ~sysmon3();
 
-   QSettings settings;
-   QString   server;  // Used before serverData is populated
-
-   QString   data;
+   QString      data;
+   SM_Settings* settingsPtr;
 
 public slots:
    void showMain   ( QString );
@@ -48,29 +47,29 @@ private:
       QMap<QString, QString> tempData;
    } serverData;
 
+   QString    server;  // Used before serverData is populated
    sysmonUDP* udp;
 
    QTimer*    timer;
 
    QLabel* label    ( const QString&, int =  0, int = QFont::Normal );
    QLabel* banner   ( const QString&, int =  0, int = QFont::Bold );
-//   QLabel* textlabel( const QString&, int = -1, int = QFont::Normal );   
 
-   int       tick            = 0;     // tick every second
+   int       tick            = 0;     // tick every loop
    bool      mFrame          = false; // turn frame on and off
 
    QPoint    position;                // location of widget
-                                      //
+
    QLabel*   lbl_hostname;
-   QLabel*   lbl_time;     // time of day
+   QLabel*   lbl_time;                // time of day
    
 
 
    QLabel*   lbl_date;     
    QLabel*   lbl_uptime;
-   QLabel*   lbl_cpu;      // title
-   QLabel*   lbl_loads;    // label for cpu
-   QLabel*   lbl_memory;   // title
+   QLabel*   lbl_cpu;                 // title
+   QLabel*   lbl_loads;               // label for cpu
+   QLabel*   lbl_memory;              // title
 
    QProgressBar* load;
    QProgressBar* memory;
@@ -85,7 +84,7 @@ private:
 
    void setup_all     ( QString );
    void parse_data    ( void );
-   void get_settings  ( QString );
+   void get_settings  ( void );
 
    void setup_time    ( void );
    void setup_date    ( void );
@@ -100,14 +99,13 @@ private:
    void update_memory ( void );
    void update_temps  ( void );
 
-   void delete_all   ( void );
-   void set_palettes ( void );
+   void delete_all    ( void );
+   void set_palettes  ( void );
 
    QVBoxLayout* layout;       // Top level layout
 
    // Temperature info
    QGridLayout*  tempsLayout;
-   QStringList   tempConfig;
 
    void setup_temps  ( void );
    void delete_temps ( void );
@@ -120,7 +118,6 @@ private Q_SLOTS:
    void update      ( void );
    void config      ( void );
    void updateLayout( void );
-   //void changeSize  ( void );
 };
 
 #endif

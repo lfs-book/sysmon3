@@ -16,7 +16,7 @@ class setup : public QFrame
 
 public:
    setup();
-   ~setup();
+   ~setup(){};
 
 private:
    QVBoxLayout* layout;       // Top level layout

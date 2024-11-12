@@ -4,25 +4,6 @@
 
 SM_Widgets::SM_Widgets( QFont f ) : font( f )
 {
-   //font = QFont( settings->value( server + "-fontFamily", "DejaVu Sans" ).toString(), 
-   //              settings->value( server + "-fontSize"  , 12 ).toInt() );
-}
-
-SM_Widgets::SM_Widgets()
-{
-   //font = QFont( settings->value( server + "-fontFamily", "DejaVu Sans" ).toString(), 
-   //              settings->value( server + "-fontSize"  , 12 ).toInt() );
-}
-
-// Work around getting server and settings for setting font
-// This needs to be called first in the classes that depend on it
-void SM_Widgets::setWidgetData( QString system, QSettings* baseSettings )
-{
-   server   = system;
-   settings = baseSettings;
-
-   font = QFont( settings->value( server + "-fontFamily", "DejaVu Sans" ).toString(), 
-                 settings->value( server + "-fontSize"  , 12 ).toInt() );
 }
 
 // label

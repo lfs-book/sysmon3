@@ -18,7 +18,6 @@ class SM_Widgets
     //! The constructor connects to global memory and moves the screen to 
     //! the point saved there. 
     SM_Widgets( QFont );
-    SM_Widgets();
     ~SM_Widgets( void ){};
 
     //! \param labelString - contents of label
@@ -27,19 +26,19 @@ class SM_Widgets
     //! * Alignment is set to Qt::AlignVCenter | Qt::AlignLeft\n
     //! * Margin is set to 5\n
     //! * Palette is set to US_GuiSettings::labelColor()
-    QLabel*      sm_label     ( const QString&, int = 0,  QFont::Weight = QFont::Bold );
+    QLabel* sm_label( const QString&, int = 0,  QFont::Weight = QFont::Bold );
 
     //! Same as us_label except:\n
     //! * different default font size (-1 point)\n
     //! * color set to US_GuiSettings::editColor()
-    QLabel*      sm_textlabel ( const QString&, int = -1, QFont::Weight = QFont::Bold );
+    QLabel* sm_textlabel( const QString&, int = -1, QFont::Weight = QFont::Bold );
 
     //! Same as us_label except:\n
     //! * color set to US_GuiSettings::frameColor()\n
     //! * alignment set to Qt::AlignCenter\n
     //! * style set to QFrame::WinPanel | QFrame::Raised\n
     //! * MidLineWidth set to 2 for frame border
-    QLabel*      sm_banner    ( const QString&, int = 0,  QFont::Weight = QFont::Bold );
+    QLabel* sm_banner( const QString&, int = 0,  QFont::Weight = QFont::Bold );
 
     //! \param labelString - text in pushbutton
     //! \param enabled
@@ -62,16 +61,10 @@ class SM_Widgets
     //! * Color is set to US_GuiSettings::normalColor()
     QGridLayout* sm_checkbox  ( const QString&, QCheckBox*&, bool = false );
 
-    QComboBox*   sm_comboBox( void );
-    QSpinBox*    sm_spinBox ( int = 0 );
-
-    void         setWidgetData( QString, QSettings* );
+    QComboBox* sm_comboBox( void );
+    QSpinBox*  sm_spinBox ( int = 0 );
 
   private:
-      QString    fontSize; 
-      QString    fontFamily;
-      QSettings* settings;
-      QString    server;
       QFont      font;
 };
 

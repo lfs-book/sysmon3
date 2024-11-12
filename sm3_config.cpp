@@ -5,45 +5,41 @@
 #include "sm3_font.h"
 #include "sm3_temps.h"
 
-SM_Config::SM_Config( sysmon3* parent )
+SM_Config::SM_Config( SM_Settings* setngs, QString dta, QRect geometry )
 {
-              mainWindow = parent;
-              server     = parent->server;
-              settings   = &parent->settings;
-                        
-   QString    familyKey  = server + "-fontFamily";
-   QString    family     = settings->value( familyKey, "DejaVu Sans" ).toString();
-                        
-   QString    sizeKey    = server + "-fontSize";
-   int        fontSize   = settings->value( sizeKey, 12 ).toInt();
-                        
-   QFont      oldfont    = QFont( family, fontSize ); 
-                        
-              widgets    = new SM_Widgets( oldfont ); 
+              settingsPtr = setngs;
+              data        = dta;
+              parentGeom  = geometry;
+
+   QString    family      = settingsPtr->value( "fontFamily" );
+   int        fontSize    = settingsPtr->value( "fontSize"   ).toInt();
+
+   QFont      oldfont     = QFont( family, fontSize );
+              widgetsPtr  = new SM_Widgets( oldfont );
 
    setWindowTitle( "sysmon3 Configuration" );
 
    // Directories
-   
    QBoxLayout* topbox = new QVBoxLayout( this );
    topbox->setContentsMargins ( 2, 2, 2, 2 );
    topbox->setSpacing         ( 2 );
 
-   version = widgets->sm_label( "Version: " SMVERSION );
+   version = widgetsPtr->sm_label( "Version: " SMVERSION );
    topbox->addWidget( version );
 
    int row = 0;
    QGridLayout* mainEntries = new QGridLayout();
 
-   // refresh interval
-   int refresh = settings->value( server + "-refreshInterval", "1" ).toInt();
+   // Refresh interval
+   int refresh = settingsPtr->value( "refreshInterval" ).toInt();
 
-   lbl_refresh = widgets->sm_label( tr( "Refresh Interval:" ) );
+   lbl_refresh = widgetsPtr->sm_label( tr( "Refresh Interval:" ) );
    
-   SBrefresh   = widgets->sm_spinBox( refresh );
+   SBrefresh   = widgetsPtr->sm_spinBox();
+   SBrefresh->setValue( refresh );
    SBrefresh->setRange( 1, 9 );
 
-   PBrefresh   = widgets->sm_pushbutton( tr( "Help" ) );
+   PBrefresh   = widgetsPtr->sm_pushbutton( tr( "Help" ) );
 
    lbl_refresh->setFont( oldfont );
    SBrefresh  ->setFont( oldfont );
@@ -56,12 +52,13 @@ SM_Config::SM_Config( sysmon3* parent )
    mainEntries->addWidget( PBrefresh,   row++, 2 );
 
    // time
-   QString timeFormat  = settings->value( server + "-timeFormat", "HH:mm:ss" ).toString();
-   bool    timeChecked = settings->value( server + "-useTime",    true       ).toBool();
+   QString timeFormat  = settingsPtr->value( "timeFormat" );
+   bool    timeChecked = settingsPtr->value( "useTime" ) == "true";
 
-   QGridLayout* CBTimeLayout = widgets->sm_checkbox( "time", CBtime, timeChecked );
-                LEtime       = widgets->sm_lineedit( timeFormat );
-                PBtime       = widgets->sm_pushbutton( tr( "Help" ) );
+   QGridLayout* CBTimeLayout = 
+                   widgetsPtr->sm_checkbox( "time", CBtime, timeChecked );
+                LEtime       = widgetsPtr->sm_lineedit( timeFormat );
+                PBtime       = widgetsPtr->sm_pushbutton( tr( "Help" ) );
 
    CBtime->setFont( oldfont );
    LEtime->setFont( oldfont );
@@ -74,12 +71,13 @@ SM_Config::SM_Config( sysmon3* parent )
    mainEntries->addWidget( PBtime,       row++, 2 );
 
    // date
-   QString dateFormat  = settings->value( server + "-dateFormat", "ddd d MMM" ).toString();
-   bool    dateChecked = settings->value( server + "-useDate",    true        ).toBool();
+   QString dateFormat  = settingsPtr->value( "dateFormat" );
+   bool    dateChecked = settingsPtr->value( "useDate" ) == "true";
 
-   QGridLayout* CBDateLayout = widgets->sm_checkbox( "date", CBdate, dateChecked );
-                LEdate       = widgets->sm_lineedit( dateFormat );
-                PBdate       = widgets->sm_pushbutton( tr( "Help" ) );
+   QGridLayout* CBDateLayout = 
+                   widgetsPtr->sm_checkbox( "date", CBdate, dateChecked );
+                LEdate       = widgetsPtr->sm_lineedit( dateFormat );
+                PBdate       = widgetsPtr->sm_pushbutton( tr( "Help" ) );
 
    CBdate->setFont( oldfont );
    LEdate->setFont( oldfont );
@@ -92,10 +90,11 @@ SM_Config::SM_Config( sysmon3* parent )
    mainEntries->addWidget( PBdate,       row++, 2 );
 
    // uptime
-   bool uptimeChecked = settings->value( server + "-useUptime", true ).toBool();
+   bool uptimeChecked = settingsPtr->value( "useUptime" ) == "true";
 
-   QGridLayout* CBuptimeLayout = widgets->sm_checkbox( "uptime", CBuptime, uptimeChecked );
-                PBuptime       = widgets->sm_pushbutton( tr( "Help" ) );
+   QGridLayout* CBuptimeLayout = 
+                   widgetsPtr->sm_checkbox( "uptime", CBuptime, uptimeChecked );
+                PBuptime       = widgetsPtr->sm_pushbutton( tr( "Help" ) );
 
    CBuptime->setFont( oldfont );
    PBuptime->setFont( oldfont );
@@ -106,12 +105,14 @@ SM_Config::SM_Config( sysmon3* parent )
    mainEntries->addWidget( PBuptime,       row++, 2 );
 
    // CPU Load
-   bool CPUchecked = settings->value( server + "-useCPU",    true ).toBool();
-   bool CPUbar     = settings->value( server + "-useCPUbar", true ).toBool();
+   bool CPUchecked = settingsPtr->value( "useCPU"    ) == "true";
+   bool CPUbar     = settingsPtr->value( "useCPUbar" ) == "true";
 
-   QGridLayout* CBcpuLayout    = widgets->sm_checkbox( "CPU Load", CBcpu,    CPUchecked );
-   QGridLayout* CBcpuBarLayout = widgets->sm_checkbox( "CPU Bar",  CBcpuBar, CPUbar );
-                PBcpu          = widgets->sm_pushbutton( tr( "Help" ) );
+   QGridLayout* CBcpuLayout    = 
+                   widgetsPtr->sm_checkbox( "CPU Load", CBcpu, CPUchecked );
+   QGridLayout* CBcpuBarLayout = 
+                   widgetsPtr->sm_checkbox( "CPU Bar",  CBcpuBar, CPUbar );
+                PBcpu          = widgetsPtr->sm_pushbutton( tr( "Help" ) );
 
    CBcpu   ->setFont( oldfont );
    CBcpuBar->setFont( oldfont );
@@ -124,10 +125,11 @@ SM_Config::SM_Config( sysmon3* parent )
    mainEntries->addWidget( PBcpu,          row++, 2 );
 
    // Memory display
-   bool memoryChecked = settings->value( server + "-useMemory", true ).toBool();
+   bool memoryChecked = settingsPtr->value( "useMemory" ) == "true";
 
-   QGridLayout* CBmemoryLayout = widgets->sm_checkbox( "Memory Bar", CBmemory, memoryChecked );
-                PBmemory       = widgets->sm_pushbutton( tr( "Help" ) );
+   QGridLayout* CBmemoryLayout = 
+                   widgetsPtr->sm_checkbox( "Memory Bar", CBmemory, memoryChecked );
+                PBmemory       = widgetsPtr->sm_pushbutton( tr( "Help" ) );
 
    CBmemory->setFont( oldfont );
    PBmemory->setFont( oldfont );
@@ -144,24 +146,24 @@ SM_Config::SM_Config( sysmon3* parent )
    QGridLayout* otherSettings = new QGridLayout();
 
    // Font Preferences
-   lbl_font = widgets->sm_label(      tr( "Font Preferences:" ) );
-   pb_font  = widgets->sm_pushbutton( tr( "Change Font"       ) );
+   lbl_font = widgetsPtr->sm_label(      tr( "Font Preferences:" ) );
+   pb_font  = widgetsPtr->sm_pushbutton( tr( "Change Font"       ) );
 
    otherSettings->addWidget( lbl_font, row,   0 );
    otherSettings->addWidget( pb_font,  row++, 1 );
    connect( pb_font, SIGNAL( clicked() ), this, SLOT( update_font() ) );
 
    // Color Preferences
-   lbl_color = widgets->sm_label(      tr( "Color Preferences:" ) );
-   pb_color  = widgets->sm_pushbutton( tr( "Change Colors"      ) );
+   lbl_color = widgetsPtr->sm_label(      tr( "Color Preferences:" ) );
+   pb_color  = widgetsPtr->sm_pushbutton( tr( "Change Colors"      ) );
 
    otherSettings->addWidget( lbl_color, row,   0 );
    otherSettings->addWidget( pb_color,  row++, 1 );
    connect( pb_color, SIGNAL( clicked() ), this, SLOT( update_colors() ) );
 
    // Temperature Preferences
-   lbl_temps = widgets->sm_label(      tr( "Temperature Preferences:" ) );
-   pb_temps  = widgets->sm_pushbutton( tr( "Change Temps"             ) );
+   lbl_temps = widgetsPtr->sm_label(      tr( "Temperature Preferences:" ) );
+   pb_temps  = widgetsPtr->sm_pushbutton( tr( "Change Temps"             ) );
 
    otherSettings->addWidget( lbl_temps, row,   0 );
    otherSettings->addWidget( pb_temps,  row++, 1 );
@@ -171,15 +173,15 @@ SM_Config::SM_Config( sysmon3* parent )
    //pb_help = sm_pushbutton( tr( "Help" ) );
    //connect( pb_help, SIGNAL( clicked() ), this, SLOT( help() ) );
    
-   pb_apply = widgets->sm_pushbutton( tr( "Apply" ) );
+   pb_apply = widgetsPtr->sm_pushbutton( tr( "Apply" ) );
    connect( pb_apply, SIGNAL( clicked() ), this, SLOT( apply() ) );
 
-   pb_exit = widgets->sm_pushbutton( tr( "Exit" ) );
+   pb_exit = widgetsPtr->sm_pushbutton( tr( "Exit" ) );
    connect( pb_exit, SIGNAL( clicked() ), this, SLOT( close() ) );
 
    QBoxLayout* buttons = new QHBoxLayout();
    buttons->addWidget( pb_apply  );
-//  buttons->addWidget( pb_help   );
+   //buttons->addWidget( pb_help   );
    buttons->addWidget( pb_exit );
 
    topbox->addLayout( otherSettings );
@@ -190,16 +192,15 @@ SM_Config::SM_Config( sysmon3* parent )
 
    // Place the window to the left or right of the parent
    // depending on the position on the screen
-   QRect parentGeom = parent->geometry();
-   int   width      = this->width();
+   int   width = parentGeom.width();
    int   newx;
+
    if ( parentGeom.left() - width - 100 < 0 )
-      newx = parentGeom.x() + parentGeom.width() + 100;
+      newx = parentGeom.x() + width + 100;
    else
-      newx = parentGeom.x() - width - 100;
+      newx = parentGeom.x() - this->geometry().width() - 100;
 
    this->move( newx, parentGeom.y() );
-
 }
 
 //void SM_Config::help( void )
@@ -305,21 +306,18 @@ void SM_Config::msg_box( QString* text, int width )
 // Relay response from update_colors()
 void SM_Config::sendColors( void )
 {
-   //QMessageBox::information(this, "Test", "sm_config received update colors" );
    emit updateColors();
 }
 
 // Relay response from update_Temps()
 void SM_Config::sendTemps( void )
 {
-   //QMessageBox::information(this, "Test", "sm_config received update temps" );
    emit updateTemps();
 }
 
 // Relay response from update_font()
 void SM_Config::sendFonts( void )
 {
-   //QMessageBox::information(this, "Test", "sm_config received update font" );
    // Update fonts here also 
    update_local();
    emit updateFonts();
@@ -327,8 +325,7 @@ void SM_Config::sendFonts( void )
 
 void SM_Config::update_font( void )
 {
-   //SM_Font* font = new SM_Font( server, settings );  
-   SM_Font* font = new SM_Font( mainWindow );
+   SM_Font* font = new SM_Font( settingsPtr );
    font->setWindowModality( Qt::WindowModal );  
    font->show();
    connect( font, SIGNAL( updateFonts() ), this, SLOT( sendFonts() ) );
@@ -336,8 +333,7 @@ void SM_Config::update_font( void )
 
 void SM_Config::update_colors( void )
 {
-   //SM_Color* colors = new SM_Color( server, settings );  
-   SM_Color* colors = new SM_Color( mainWindow );  
+   SM_Color* colors = new SM_Color( settingsPtr );  
    colors->setWindowModality( Qt::WindowModal );  
    colors->show();
    connect( colors, SIGNAL( updateColors() ), this, SLOT( sendColors() ) );
@@ -345,8 +341,7 @@ void SM_Config::update_colors( void )
 
 void SM_Config::update_temps( void )
 {
-   //SM3_Temps* temps = new SM3_Temps( server, settings, data );  
-   SM3_Temps* temps = new SM3_Temps( mainWindow );  
+   SM3_Temps* temps = new SM3_Temps( settingsPtr, data );  
    temps->setWindowModality( Qt::WindowModal );  
    temps->show();
    connect( temps, SIGNAL( updateTemps() ), this, SLOT( sendTemps() ) );
@@ -355,8 +350,8 @@ void SM_Config::update_temps( void )
 void SM_Config::update_local( void )
 {
    // Update local widgets
-   QFont font = QFont( settings->value( server + "-fontFamily", "DejaVu Sans" ).toString(),
-                       settings->value( server + "-fontSize"  , 12 ).toInt() );
+   QFont font = QFont( settingsPtr->value( "fontFamily" ),
+                       settingsPtr->value( "fontSize"   ).toInt() );
    
    version ->setFont( font );
    pb_font ->setFont( font );
@@ -392,19 +387,25 @@ void SM_Config::update_local( void )
 
 void SM_Config::apply( void )
 {
-   settings->setValue( server + "-refreshInterval", SBrefresh->value() );
+   settingsPtr->setValue( "refreshInterval", 
+                                        QString::number( SBrefresh->value() ) );
 
-   settings->setValue( server + "-useTime",   CBtime->isChecked()   );
-   settings->setValue( server + "-useDate",   CBdate->isChecked()   );
-   settings->setValue( server + "-useUptime", CBuptime->isChecked() );
-   settings->setValue( server + "-useCPU",    CBcpu->isChecked()    );
-   settings->setValue( server + "-useCPUbar", CBcpuBar->isChecked() );
-   settings->setValue( server + "-useMemory", CBmemory->isChecked() );
+   settingsPtr->setValue( "useTime",    bool2string( CBtime->isChecked()   ) );
+   settingsPtr->setValue( "useDate",    bool2string( CBdate->isChecked()   ) );
+   settingsPtr->setValue( "useUptime",  bool2string( CBuptime->isChecked() ) );
+   settingsPtr->setValue( "useCPU",     bool2string( CBcpu->isChecked()    ) );
+   settingsPtr->setValue( "useCPUbar",  bool2string( CBcpuBar->isChecked() ) );
+   settingsPtr->setValue( "useMemory",  bool2string( CBmemory->isChecked() ) );
 
-   settings->setValue( server + "-timeFormat", LEtime->text() );
-   settings->setValue( server + "-dateFormat", LEdate->text() );
-   settings->sync();
+   settingsPtr->setValue( "timeFormat", LEtime->text() );
+   settingsPtr->setValue( "dateFormat", LEdate->text() );
+   settingsPtr->sync();
 
    emit updateEntries();
 }
 
+QString SM_Config::bool2string( bool value )
+{
+   if ( value ) return "true";
+   else         return "false";
+}

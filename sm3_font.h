@@ -10,26 +10,23 @@
 #define BUTTON_H 26
 
 //!  A class to allow the user to select a customized font.
-class SM_Font : public QFrame //, public SM_Widgets
+class SM_Font : public QFrame 
 {
   Q_OBJECT
   
   public:
     //*! \brief Construct the window for font selection
-    SM_Font( sysmon3* parent = nullptr ); 
+    SM_Font( SM_Settings* ); 
     
     //! \brief A null destructor.
     ~SM_Font() {};
-
 
   signals:  
     void updateFonts( void );
 
   private:
-    SM_Widgets*  widgets;  // Probably should be private
-
-    QSettings*   settings;
-    QString      server;
+    SM_Widgets*  widgetsPtr;  
+    SM_Settings* settingsPtr;
 
     QComboBox*   cb_family;
     QSpinBox*    sb_size;
@@ -53,7 +50,6 @@ class SM_Font : public QFrame //, public SM_Widgets
     //QPushButton* pb_help;
     QPushButton* pb_exit;
     QPushButton* pb_apply;
-
 
     void redraw( void );
 

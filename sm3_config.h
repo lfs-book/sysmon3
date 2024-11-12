@@ -24,17 +24,14 @@ class SM_Config : public QFrame
 
 public:
 
-   SM_Config( sysmon3* parent );
+   SM_Config( SM_Settings* , QString, QRect );
    ~SM_Config() {};
-  
-   SM_Widgets* widgets;
-
-   sysmon3* mainWindow;
 
 private:
-   QSettings*   settings;
-   QString      server;
+   SM_Settings* settingsPtr;
    QString      data;
+   SM_Widgets*  widgetsPtr;
+   QRect        parentGeom;
 
    QLabel*      version;
    QLabel*      lbl_refresh;
@@ -70,6 +67,7 @@ private:
 
    void         update_local( void );
    void         msg_box     ( QString*, int );
+   QString      bool2string ( bool );
 
    QStringList  sensors;  // <Interface,Device>
 

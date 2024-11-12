@@ -12,7 +12,6 @@
 #include <QPushButton>
 #include <QMessageBox>
 
-//#include "sysmon3.h"
 #include "setup.h"
 #include "udp.h"
 
@@ -26,6 +25,7 @@ setup::setup()
    // ListWidget
    listBox = new QListWidget();
 
+   // Populate the listBox with known servers
    int size = settings.beginReadArray( "hosts" );
    if ( size == 0 )
       new QListWidgetItem( tr( "localhost" ), listBox );
@@ -81,10 +81,6 @@ setup::setup()
    layout->addLayout( row2 );
 
    this->setLayout( layout );
-}
-
-setup::~setup()
-{
 }
 
 void setup::test( void )
