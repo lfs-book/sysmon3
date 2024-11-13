@@ -6,13 +6,13 @@
 #include <QListWidget>
 
 //!  A class to allow encompass QSettings and server name.
-class SM_Settings : public QObject
+class SM_Settings 
 {
-  Q_OBJECT
+//  Q_OBJECT
   
   public:
     //*! \brief A suporting class for settings access
-    SM_Settings( const QString srvr );
+    SM_Settings( const QString& server );
    
     //! \brief A null destructor.
     ~SM_Settings() {}

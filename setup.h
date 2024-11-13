@@ -22,8 +22,6 @@ private:
    QVBoxLayout* layout;       // Top level layout
    QListWidget* listBox;
    QLineEdit*   editLine;
-   QSettings    settings;
-
 
 private slots:
    void test       ( void );

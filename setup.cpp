@@ -25,6 +25,8 @@ setup::setup()
    // ListWidget
    listBox = new QListWidget();
 
+   QSettings settings( "LinuxFromScratch/hosts" );
+   
    // Populate the listBox with known servers
    int size = settings.beginReadArray( "hosts" );
    if ( size == 0 )
@@ -39,6 +41,9 @@ setup::setup()
    }
 
    settings.endArray();
+
+   listBox->setCurrentRow( 0 );
+
    layout->addWidget( listBox );
 
    // LineEdit
@@ -140,6 +145,8 @@ void setup::deleteEntry( void )
 
 void setup::save( void )
 {
+   QSettings settings( "LinuxFromScratch/hosts" );
+
    settings.remove         ( "hosts" );
    settings.beginWriteArray( "hosts" );
 

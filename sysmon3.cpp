@@ -15,16 +15,16 @@ int main(int argc, char *argv[])
    QCoreApplication::setApplicationName("sysmon3");
    QCoreApplication::setApplicationVersion(QT_VERSION_STR);
 
-   QString arg1;
-   if ( argc > 1 ) arg1 = argv[ 1 ];
+   QString server;
+   if ( argc > 1 ) server = argv[ 1 ];
 
-   sysmon3 mainWin( arg1 );
+   sysmon3 mainWin( server );
    // We don't show yet
 
    return a.exec();
 }  
 
-sysmon3::sysmon3( QString arg1 )
+sysmon3::sysmon3( QString server )
 {
    setContextMenuPolicy( Qt::ActionsContextMenu );  // Add actions for right click
    setWindowTitle( tr( "sysmon3" ) );
@@ -52,12 +52,12 @@ sysmon3::sysmon3( QString arg1 )
 
    bool runSetup = true;
 
-   if ( ! arg1.isEmpty() )
+   if ( ! server.isEmpty() )
    {
       // If server has been set up, don't run setup()
       // We can't use SM_Settings yet because we don't know the server   
 
-      QSettings settings;  // Just use this temporarily 
+      QSettings settings( "LinuxFromScratch/hosts" );  // Just use this temporarily 
 
       int size = settings.beginReadArray( "hosts" );
       if ( size > 0 )
@@ -65,7 +65,7 @@ sysmon3::sysmon3( QString arg1 )
          for ( int i = 0; i < size; i++ )
          {
             settings.setArrayIndex( i );
-            if ( settings.value( "hosts" ).toString() == arg1 )
+            if ( settings.value( "hosts" ).toString() == server )
             {
                runSetup = false;  
                break;
@@ -84,7 +84,7 @@ sysmon3::sysmon3( QString arg1 )
               this, SLOT  ( showMain      ( QString ) ) );
    }
    else 
-      showMain( arg1 );  // arg1 is the sever name on the command line
+      showMain( server );  // This is the sever name on the command line
 }
 
 void sysmon3::config( void )
@@ -100,7 +100,6 @@ void sysmon3::config( void )
 
 sysmon3::~sysmon3()
 {
-qDebug() << "Destructor ~sysmon3()";
    position = this->pos();
    settingsPtr->setValue( "positionX", QString::number( position.x() ) );
    settingsPtr->setValue( "positionY", QString::number( position.y() ) );
@@ -108,10 +107,10 @@ qDebug() << "Destructor ~sysmon3()";
 }
 
 // This is a SLOT, but perhaps the slot should just be setup_all
-void sysmon3::showMain( QString server1 )
+void sysmon3::showMain( QString server )
 {
-   server      = server1;
-   settingsPtr = new SM_Settings( server );
+   //server      = server1;
+   settingsPtr = new SM_Settings( "LinuxFromScratch/" + server );
 
    // Start layout   
    layout = new QVBoxLayout; 

@@ -47,7 +47,7 @@ private:
       QMap<QString, QString> tempData;
    } serverData;
 
-   QString    server;  // Used before serverData is populated
+   //QString    server;  // Used before serverData is populated
    sysmonUDP* udp;
 
    QTimer*    timer;

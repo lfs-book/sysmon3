@@ -1,13 +1,13 @@
 #include "sysmon3.h"
 #include "sm3_settings.h"
 
-SM_Settings::SM_Settings( const QString srvr ) : server( srvr ) 
+SM_Settings::SM_Settings( const QString& server ) : settings( server ) 
 {
 }
 
 QString SM_Settings::value( const QString key ) const
 {
-   QString s = settings.value( server + "-" + key ).toString();
+   QString s = settings.value( key ).toString();
 
    if ( s.isEmpty() ) 
       s = defaults.value( key , "" );
@@ -18,9 +18,9 @@ QString SM_Settings::value( const QString key ) const
 void SM_Settings::setValue( const QString key, const QString value )
 {
    if ( value == defaults.value( key ) )
-      settings.remove( server + "-" + key );
+      settings.remove( key );
    else
-      settings.setValue( server + "-" + key, value );
+      settings.setValue( key, value );
 }
 
 void SM_Settings::setBoolValue( const QString key, const bool value )
@@ -34,11 +34,9 @@ void SM_Settings::setBoolValue( const QString key, const bool value )
 
 bool SM_Settings::contains( const QString key ) const
 {
-   return settings.contains( server + "-" + key );
+   return settings.contains( key );
 }
 
-// Note that for our purposes arrays do not use server
-// They are only used to define configured hosts (servers)
 QStringList SM_Settings::readArray( const QString key )
 {
    QStringList sl;
@@ -76,8 +74,7 @@ void SM_Settings::writeArray( const QString key, const QStringList values )
 // In the following methods 'group', for now, is always 'temperatures'
 void SM_Settings::removeGroup( const QString group )
 {
-   QString g = server + "-" + group;
-   settings.beginGroup( g );
+   settings.beginGroup( group );
    settings.remove( "" );
    settings.endGroup();
 }
@@ -85,8 +82,7 @@ void SM_Settings::removeGroup( const QString group )
 // This is only used in one place - temperature config
 void SM_Settings::addGroup( const QString group, const QStringList values )
 {
-   QString g = server + "-" + group;
-   settings.beginGroup( g );
+   settings.beginGroup( group );
 
    for ( int i = 0; i < values.size(); i++ )
    {
@@ -104,9 +100,8 @@ void SM_Settings::addGroup( const QString group, const QStringList values )
 QStringList SM_Settings::readGroup( const QString group )
 {
    QStringList config;
-   QString     g = server + "-" + group;
 
-   settings.beginGroup( g );
+   settings.beginGroup( group );
    QStringList keys = settings.childKeys();
 
    foreach (const QString &key, keys) 
