@@ -47,5 +47,7 @@ what temperature sensors to monitor.  The displayed labels for temperature
 sensors can also be customized. Selecting 'Apply' immediately takes changes
 to the main window effective.
 
-Note: The configuration file is $HOME/.config/LinuxFromScratch/sysmon3.conf.
-This file can be read, but is designed to be managed from the application.
+Note: The configuration files are in $HOME/.config/LinuxFromScratch/.  There is
+a master file, hosts.conf, and a separate <server>.conf file for each server
+that has been configured.  These files can be read, but are designed to be
+managed from the application.
