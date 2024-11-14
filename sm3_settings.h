@@ -17,22 +17,21 @@ class SM_Settings
     //! \brief A null destructor.
     ~SM_Settings() {}
 
-    QString     value       ( const QString key ) const;
-    void        setValue    ( const QString key, const QString value );
-    void        setBoolValue( const QString key, const bool value );
-    bool        contains    ( const QString key ) const;
+    QString     value       ( const QString& key ) const;
+    void        setValue    ( const QString& key, const QString& value );
+    void        setBoolValue( const QString& key, const bool value );
+    bool        contains    ( const QString& key ) const;
 
-    // Use to get and set "hosts" in setup.cpp and sysmon3
-    // WE do not use 'server' in the key
-    QStringList readArray ( const QString key );
-    void        writeArray( const QString key, const QStringList values );
+    // No longer used in sysmon3
+    QStringList readArray ( const QString& key );
+    void        writeArray( const QString& key, const QStringList& values );
 
     // Used in temperatures config
-    void        removeGroup( const QString key );
-    void        addGroup   ( const QString key, const QStringList values );
-    QStringList readGroup  ( const QString group );
+    void        removeGroup( const QString& key );
+    void        addGroup   ( const QString& key, const QStringList& values );
+    QStringList readGroup  ( const QString& group );
 
-    QString     getDefault ( const QString key );
+    QString     getDefault ( const QString& key );
     void        sync( void );
 
   private:

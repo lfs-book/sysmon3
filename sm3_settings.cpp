@@ -5,7 +5,7 @@ SM_Settings::SM_Settings( const QString& server ) : settings( server )
 {
 }
 
-QString SM_Settings::value( const QString key ) const
+QString SM_Settings::value( const QString& key ) const
 {
    QString s = settings.value( key ).toString();
 
@@ -15,7 +15,7 @@ QString SM_Settings::value( const QString key ) const
    return s;
 }
 
-void SM_Settings::setValue( const QString key, const QString value )
+void SM_Settings::setValue( const QString& key, const QString& value )
 {
    if ( value == defaults.value( key ) )
       settings.remove( key );
@@ -23,7 +23,7 @@ void SM_Settings::setValue( const QString key, const QString value )
       settings.setValue( key, value );
 }
 
-void SM_Settings::setBoolValue( const QString key, const bool value )
+void SM_Settings::setBoolValue( const QString& key, const bool value )
 {
    QString boolValue;
    if ( value ) boolValue = "true";
@@ -32,12 +32,12 @@ void SM_Settings::setBoolValue( const QString key, const bool value )
    setValue( key, boolValue );
 }
 
-bool SM_Settings::contains( const QString key ) const
+bool SM_Settings::contains( const QString& key ) const
 {
    return settings.contains( key );
 }
 
-QStringList SM_Settings::readArray( const QString key )
+QStringList SM_Settings::readArray( const QString& key )
 {
    QStringList sl;
 
@@ -57,7 +57,7 @@ QStringList SM_Settings::readArray( const QString key )
    return sl;
 }
 
-void SM_Settings::writeArray( const QString key, const QStringList values )
+void SM_Settings::writeArray( const QString& key, const QStringList& values )
 {
    settings.remove( key );
    settings.beginWriteArray( key );
@@ -72,7 +72,7 @@ void SM_Settings::writeArray( const QString key, const QStringList values )
 
 // Groups are used to define the temperature interface and sensors for a server
 // In the following methods 'group', for now, is always 'temperatures'
-void SM_Settings::removeGroup( const QString group )
+void SM_Settings::removeGroup( const QString& group )
 {
    settings.beginGroup( group );
    settings.remove( "" );
@@ -80,7 +80,7 @@ void SM_Settings::removeGroup( const QString group )
 }
 
 // This is only used in one place - temperature config
-void SM_Settings::addGroup( const QString group, const QStringList values )
+void SM_Settings::addGroup( const QString& group, const QStringList& values )
 {
    settings.beginGroup( group );
 
@@ -97,7 +97,7 @@ void SM_Settings::addGroup( const QString group, const QStringList values )
    settings.endGroup();
 }
 
-QStringList SM_Settings::readGroup( const QString group )
+QStringList SM_Settings::readGroup( const QString& group )
 {
    QStringList config;
 
@@ -111,7 +111,7 @@ QStringList SM_Settings::readGroup( const QString group )
    return config;
 }
 
-QString SM_Settings::getDefault( const QString key )
+QString SM_Settings::getDefault( const QString& key )
 {
    return defaults.value( key , "" );
 }
