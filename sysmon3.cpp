@@ -266,8 +266,8 @@ void sysmon3::setup_memory()
    memory->setPalette( p );
 
    lbl_memory = banner( "Memory Use", 0, QFont::Bold );
-   layout->addWidget( memory );
    layout->addWidget( lbl_memory );
+   layout->addWidget( memory );
 }
 
 void sysmon3::setup_temps()
@@ -281,7 +281,10 @@ void sysmon3::setup_temps()
 
    // Create tempsLayout 
    tempsLayout = new QGridLayout();
-
+ 
+   lbl_temps = banner( "Temperatures", 0, QFont::Bold );
+   layout->addWidget( lbl_temps );
+   
    // Populate tempsLayout
    for ( int i = 0; i < tempConfig.size(); i++ )
    {

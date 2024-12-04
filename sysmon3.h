@@ -70,6 +70,7 @@ private:
    QLabel*   lbl_cpu;                 // title
    QLabel*   lbl_loads;               // label for cpu
    QLabel*   lbl_memory;              // title
+   QLabel*   lbl_temps;               // label for temperatures
 
    QProgressBar* load;
    QProgressBar* memory;
