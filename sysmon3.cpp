@@ -589,7 +589,8 @@ void sysmon3::update_temps()
 
      // Update temp at position ( i, 1 )
      QString      key   = currentTemps[ text ];
-     QString      degC  = serverData.tempData[ key ];
+     QString      degC  = serverData.tempData[ key ] + 
+                          QString::fromUtf8( " \u00B0C" ); // degree C
                   item  = tempsLayout->itemAtPosition( i, 1 );
                   label = qobject_cast<QLabel*>( item->widget() );
                   label->setText( degC );
