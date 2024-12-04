@@ -54,7 +54,15 @@ QPushButton* SM_Widgets::sm_pushbutton( const QString& labelString, bool enabled
    thisFont.setPointSize( font.pointSize() + fontAdjust );
    button->setFont( thisFont );
 
-   QString style = "border: 4px outset gray; border-radius: 10px;";
+   //QString style = "border: 4px outset gray; border-radius: 10px;"
+   QString style = "QPushButton {"
+                     "border: 4px outset gray;"
+                     "border-radius: 10px;"
+                     "}"
+                   "QPushButton:hover {"
+                     "background-color:#aaa;"
+                     "}";
+   
    button->setStyleSheet( style );
 
    button->setAutoDefault( false );
