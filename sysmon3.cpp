@@ -210,6 +210,12 @@ void sysmon3::setup_cpuLoad()
 
    lbl_cpu = nullptr;
 
+   if ( useCPU || useCPUbar )
+   {
+     lbl_cpu = banner( "CPU Load", 0, QFont::Bold );
+     layout->addWidget( lbl_cpu   );
+   }
+
    if ( useCPU )
    {
       lbl_loads = label( serverData.load );
@@ -237,9 +243,6 @@ void sysmon3::setup_cpuLoad()
 
       layout->addWidget( load );
    }
-
-   lbl_cpu = banner( "CPU Load", 0, QFont::Bold );
-   layout->addWidget( lbl_cpu   );
 }
 
 void sysmon3::setup_memory()
