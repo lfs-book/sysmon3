@@ -40,6 +40,11 @@ sysmonUDP::sysmonUDP( QString* server, int port )
 
 QString sysmonUDP::getData()
 {
+     struct timeval tp; // debug
+     struct timeval tv;
+     tv.tv_sec  = 1;
+     tv.tv_usec = 0;
+
     if ( ! lookupOK ) return "Bad IP lookup";
 
     QByteArray data_out = QByteArray( "Send data" );
@@ -55,7 +60,8 @@ QString sysmonUDP::getData()
                (struct sockaddr*)& server_socket,
                sizeof( server_socket ) );
 
-//qDebug() << "Bytes sent: " << i;
+gettimeofday( &tp, NULL );
+//qDebug() << "Bytes sent: " << i << tp.tv_sec << tp.tv_usec;
 
     if ( i < 0 ) return "UDP out failed";
 
@@ -73,6 +79,9 @@ QString sysmonUDP::getData()
     char data_in [ BUFFER_SIZE ];
     memset( (char*)& data_in, 0, BUFFER_SIZE );
 
+    // Make the socket time out after the timeval duration
+    setsockopt( udp_socket, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof( tv ) );
+
     // Now read the response
     int n = 
        recvfrom( udp_socket,
@@ -81,14 +90,22 @@ QString sysmonUDP::getData()
                  MSG_WAITALL,
                  (struct sockaddr*)& client_socket,
                  &socket_len );
-//qDebug() << "Bytes received: " << n;
+
+gettimeofday( &tp, NULL );
+//qDebug() << "Bytes received: " << n << tp.tv_sec << tp.tv_usec;
 //qDebug() << data_in;
+
     if ( n < 0 )
+    {
+       if  (errno == EAGAIN      ) qDebug() << "EAGAIN";
+       if  (errno == EWOULDBLOCK ) qDebug() << "EWOULDBLOCK";
        return "Timeout";
+    }
  
     //data_in[ n ] = '\0'; // make sure the string is properly terminated
     QString s = QString( data_in );
+
 //qDebug() << s << "\n--- size of string:" << s.size();
-    //return QString( data_in );
+
     return s;
 }
