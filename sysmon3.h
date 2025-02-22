@@ -22,7 +22,7 @@ public:
    ~sysmon3();
 
    QString      data;
-   SM_Settings* settingsPtr;
+   SM_Settings* settingsPtr = NULL;
 
 public slots:
    void showMain   ( QString );

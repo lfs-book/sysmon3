@@ -100,6 +100,9 @@ void sysmon3::config( void )
 
 sysmon3::~sysmon3()
 {
+   // Setting values requires valid settings
+   if ( settingsPtr == NULL ) return;
+
    position = this->pos();
    settingsPtr->setValue( "positionX", QString::number( position.x() ) );
    settingsPtr->setValue( "positionY", QString::number( position.y() ) );
