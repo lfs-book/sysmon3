@@ -97,8 +97,8 @@ gettimeofday( &tp, NULL );
 
     if ( n < 0 )
     {
-       if  (errno == EAGAIN      ) qDebug() << "EAGAIN";
-       if  (errno == EWOULDBLOCK ) qDebug() << "EWOULDBLOCK";
+       //if  (errno == EAGAIN      ) qDebug() << "EAGAIN";
+       //if  (errno == EWOULDBLOCK ) qDebug() << "EWOULDBLOCK";
        return "Timeout";
     }
  

@@ -35,3 +35,4 @@
 moc*
 sysmon3
 Makefile
+*.swp
