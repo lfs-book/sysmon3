@@ -1,0 +1,8 @@
+sysmon3-3.0.1
+
+This is a bug release.
+
+- Eliminate a segfault when the application exits before a 
+  server is established.
+
+- Ensure the timout for a UDP reply is set properly.
