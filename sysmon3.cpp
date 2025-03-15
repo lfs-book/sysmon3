@@ -100,7 +100,7 @@ void sysmon3::config( void )
 
 sysmon3::~sysmon3()
 {
-   // Setting values requires valid settings
+   // Setting values requires valid settingsPtr
    if ( settingsPtr == NULL ) return;
 
    position = this->pos();
@@ -488,6 +488,9 @@ void sysmon3::update()
 
    // Parse and store
    parse_data();
+
+   // Make sure the hostname is set
+   lbl_hostname->setText( serverData.server );
 
    // Update elements
    update_time   ();

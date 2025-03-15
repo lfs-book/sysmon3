@@ -1,3 +1,10 @@
+sysmon3-3.0.2
+
+This is a bug release.
+
+- Actually update the version number.
+- Ensure hostname is displayed on initial startup.
+
 sysmon3-3.0.1
 
 This is a bug release.
