@@ -214,9 +214,8 @@ void SM_Color::progress_background( void )
    sample_progress->setPalette( p );
 }
 
-void SM_Color::update( int index )
+void SM_Color::update( int /* unused */ )
 {
-   index++; // So the comiler does not complain about unused parameter
    redraw();
 }
 

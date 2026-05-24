@@ -1,0 +1,10 @@
+[Desktop Entry]
+Name=sysmon3
+Comment=sysmon3 System Monitor
+GenericName=sysmon3
+Exec=sysmon3
+Type=Application
+Icon=sysmon3.png
+StartupNotify=false
+Categories=System;Utilities
+

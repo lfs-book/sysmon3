@@ -2,7 +2,8 @@ QT       += core gui widgets network
 
 TARGET   = sysmon3
 TEMPLATE = app
-CONFIG += c++11
+
+QMAKE_CXXFLAGS += -Wno-sfinae-incomplete
 
 HEADERS = sysmon3.h     \
           sm3_widgets.h \
@@ -32,5 +33,14 @@ isEmpty(PREFIX) {
 isEmpty(BINDIR) {
     BINDIR = $${PREFIX}/bin
 }
+
+desktop.files = sysmon3.desktop
+desktop.path  = /usr/share/applications
+INSTALLS += desktop
+
+icons.files = sysmon3.png
+icons.path  = /usr/share/pixmaps
+INSTALLS += icons
+
 target.path = $$BINDIR
 INSTALLS += target

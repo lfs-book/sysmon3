@@ -116,9 +116,8 @@ void SM_Font::setDefault( void )
    sb_size  ->setValue      ( 12 );
 }
 
-void SM_Font::update( int index )
+void SM_Font::update( int /* unused */ )
 {
-   index++; // So the comiler does not complain about unused parameter
    redraw();
 }
 
