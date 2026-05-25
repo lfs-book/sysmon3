@@ -1,3 +1,11 @@
+sysmon3-3.0.3
+
+Minor fixes.
+
+- Add sysmon3.desktop and sysmon3.png
+- Fix a udp problem when the system returns an IPv6 address for localhost.
+- Fix some build warnings with gcc-16.
+
 sysmon3-3.0.2
 
 This is a bug release.
