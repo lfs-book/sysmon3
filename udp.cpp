@@ -18,7 +18,12 @@ sysmonUDP::sysmonUDP( QString* server, int port )
 
     lookupOK = true;
 
-    QString ip = returnedHost.addresses().first().toString();
+    QString ip;
+
+    if ( *server == "localhost" )
+       ip = "127.0.0.1";
+    else
+       ip = returnedHost.addresses().first().toString();
 
 //qDebug() << "Found address:" << ip.toLatin1();     
 
@@ -47,15 +52,15 @@ QString sysmonUDP::getData()
 
     if ( ! lookupOK ) return "Bad IP lookup";
 
-    QByteArray data_out = QByteArray( "Send data" );
+//    QByteArray data_out = QByteArray( "Send data" );
 
 //qDebug() << "Size of data_out should be 9: " << data_out.size();
 
     // Ask for data
     ssize_t i =
        sendto( udp_socket,
-               data_out.data(),
-               data_out.size() + 1, // Add trailing null
+               "Send data",   //data_out.data(),
+               10,             //data_out.size() + 1, // Add trailing null
                MSG_CONFIRM,
                (struct sockaddr*)& server_socket,
                sizeof( server_socket ) );
