@@ -59,9 +59,9 @@ QString sysmonUDP::getData()
     // Ask for data
     ssize_t i =
        sendto( udp_socket,
-               "Send data",   //data_out.data(),
-               10,             //data_out.size() + 1, // Add trailing null
-               MSG_CONFIRM,
+               "Send data",   // data_out.data(),
+               10             // data_out.size() + 1, // Add trailing null
+               0,             // no flags
                (struct sockaddr*)& server_socket,
                sizeof( server_socket ) );
 
@@ -79,7 +79,7 @@ gettimeofday( &tp, NULL );
     client_socket.sin_port        = htons( 0 );
     client_socket.sin_addr.s_addr = htonl( INADDR_ANY );
 
-    socklen_t socket_len;
+    socklen_t socket_len = sizeof(client_socket);
     #define BUFFER_SIZE 1024
     char data_in [ BUFFER_SIZE ];
     memset( (char*)& data_in, 0, BUFFER_SIZE );
