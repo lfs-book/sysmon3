@@ -1,3 +1,7 @@
+sysmon3-3.0.4
+
+- Fix a udp problem when restarting after a server interruption.
+
 sysmon3-3.0.3
 
 Minor fixes.
