@@ -60,7 +60,7 @@ QString sysmonUDP::getData()
     ssize_t i =
        sendto( udp_socket,
                "Send data",   // data_out.data(),
-               10             // data_out.size() + 1, // Add trailing null
+               10,            // data_out.size() + 1;  Add trailing null
                0,             // no flags
                (struct sockaddr*)& server_socket,
                sizeof( server_socket ) );
