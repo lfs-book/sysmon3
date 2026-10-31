@@ -1,4 +1,8 @@
 //! \file sm_font.cpp
+
+#include <QFontDatabase>
+#include <QFontDialog>
+
 #include "sysmon3.h"
 #include "sm3_font.h"
 
@@ -24,20 +28,21 @@ SM_Font::SM_Font( SM_Settings* setngs )
    // Body
    pb_font = widgetsPtr->sm_pushbutton( tr( "Select Base Font" ) );
    topbox->addWidget( pb_font );
-   connect( pb_font, SIGNAL( clicked() ), SLOT( selectFont() ) );
+   connect( pb_font, &QPushButton::clicked, this, &SM_Font::selectFont );
 
    lbl_family = widgetsPtr->sm_label( tr( "Current Family:" ), -1 );
    lbl_family->setFixedHeight( BUTTON_H );
    
    QGridLayout* lineGrid = new QGridLayout();
 
-   QFontDatabase fontLib;; 
+   QFontDatabase fontLib; 
    cb_family = widgetsPtr->sm_comboBox();
    cb_family->addItems( fontLib.families() );
    cb_family->setCurrentText( family );
 
-   connect( cb_family, SIGNAL( currentIndexChanged( int ) ),
-            this,      SLOT  ( update             ( int ) ) ); 
+
+   connect( cb_family, &QComboBox::currentIndexChanged,
+            this,      &SM_Font::redraw ); 
    
    int row = 0;
 
@@ -51,8 +56,8 @@ SM_Font::SM_Font( SM_Settings* setngs )
    sb_size->setRange( 9, 24 );
    sb_size->setValue( fontSize );    
 
-   connect( sb_size, SIGNAL( valueChanged ( int ) ),
-            this,    SLOT  ( update       ( int ) ) ); 
+   connect( sb_size, &QSpinBox::valueChanged,
+            this,    &SM_Font::redraw ); 
 
    ckbox_grid = widgetsPtr->sm_checkbox( "Bold", ckbox_bold, checked );
 
@@ -87,22 +92,18 @@ SM_Font::SM_Font( SM_Settings* setngs )
    topbox->addLayout( lineGrid );
 
    pb_default = widgetsPtr->sm_pushbutton( tr( "Select Default" ) );
-   connect( pb_default, SIGNAL( clicked() ), SLOT( setDefault() ) );
+   connect( pb_default, &QPushButton::clicked, this, &SM_Font::setDefault );
    topbox->addWidget( pb_default );
 
    pb_apply = widgetsPtr->sm_pushbutton( tr( "Apply" ) );
-   connect( pb_apply, SIGNAL( clicked() ), SLOT( apply() ) );
-
-   //pb_help = sm_pushbutton( tr( "Help" ) );
-   //connect( pb_help, SIGNAL( clicked() ), SLOT( help() ) );
+   connect( pb_apply, &QPushButton::clicked, this, &SM_Font::apply );
 
    pb_exit = widgetsPtr->sm_pushbutton( tr( "Exit" ) );
-   connect( pb_exit, SIGNAL( clicked() ), SLOT( close() ) );
+   connect( pb_exit, &QPushButton::clicked, this, &SM_Font::close );
 
    QBoxLayout* buttons = new QHBoxLayout();
 
    buttons->addWidget( pb_apply  );
-   //buttons->addWidget( pb_help   );
    buttons->addWidget( pb_exit );
 
   topbox->addLayout( buttons );
@@ -116,11 +117,6 @@ void SM_Font::setDefault( void )
    sb_size  ->setValue      ( 12 );
 }
 
-void SM_Font::update( int /* unused */ )
-{
-   redraw();
-}
-
 void SM_Font::apply()
 {
    // Set font vales in settings
@@ -131,12 +127,6 @@ void SM_Font::apply()
 
    emit updateFonts();
 }
-
-//void SM_Font::help()
-//{
-// SM_Help* help = new SM_Help();
-// help->show_help( "manual/smfont.html" );
-//}
 
 void SM_Font::selectFont()
 {

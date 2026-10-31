@@ -19,9 +19,9 @@ System temperature sensors
 These values are determined by the server's sysmond server process and sent to
 the client when requested.
 
-The main process runs in a loop, once a second, where is sends a UDP request to
-the server and receives all values as a response.  The client then parses then
-response and desplays the items desired. The loop time is not currently
+The main process runs in a loop, by default once a second, where it sends a UDP
+request to the server and receives all values as a response.  The client then
+parses the response and displays the items desired. The loop time is
 configurable.
 
 When setting up the host to be monitored, the system needs to find the IP
@@ -30,6 +30,6 @@ be a little confusing.  If the host is accessed by www.example.org, but the
 hosts name is 'mercury', then the setup requires www.example.org to be
 specified, but the top line will display 'mercury' as the host name.
 
-The source code is written it provide a reaonably well documented example of a
-non-trivial application based on Qt.  The source is about 2700 lines of C++
-code divided into 17 files.  
+The source code is written to provide a reasonably well documented example of a
+non-trivial application based on Qt.  The source is about 2900 lines of C++
+code divided into 19 files.  

@@ -1,5 +1,10 @@
 //! \file sm3_config.cpp
 
+#include <QGuiApplication>
+#include <QFontDatabase>
+#include <QMessageBox>
+#include <QScreen>
+
 #include "sysmon3.h"
 #include "sm3_config.h"
 #include "sm3_font.h"
@@ -18,6 +23,7 @@ SM_Config::SM_Config( SM_Settings* setngs, QString dta, QRect geometry )
               widgetsPtr  = new SM_Widgets( oldfont );
 
    setWindowTitle( "sysmon3 Configuration" );
+   setAttribute( Qt::WA_DeleteOnClose );
 
    // Directories
    QBoxLayout* topbox = new QVBoxLayout( this );
@@ -41,11 +47,7 @@ SM_Config::SM_Config( SM_Settings* setngs, QString dta, QRect geometry )
 
    PBrefresh   = widgetsPtr->sm_pushbutton( tr( "Help" ) );
 
-   lbl_refresh->setFont( oldfont );
-   SBrefresh  ->setFont( oldfont );
-   PBrefresh  ->setFont( oldfont );
-
-   connect( PBrefresh, SIGNAL( clicked() ), this, SLOT( refresh_help() ) );
+   connect( PBrefresh, &QPushButton::clicked, this, &SM_Config::refresh_help );
 
    mainEntries->addWidget( lbl_refresh, row,   0 );
    mainEntries->addWidget( SBrefresh,   row,   1 );
@@ -60,11 +62,7 @@ SM_Config::SM_Config( SM_Settings* setngs, QString dta, QRect geometry )
                 LEtime       = widgetsPtr->sm_lineedit( timeFormat );
                 PBtime       = widgetsPtr->sm_pushbutton( tr( "Help" ) );
 
-   CBtime->setFont( oldfont );
-   LEtime->setFont( oldfont );
-   PBtime->setFont( oldfont );
-
-   connect( PBtime, SIGNAL( clicked() ), this, SLOT( time_help() ) );
+   connect( PBtime, &QPushButton::clicked, this, &SM_Config::time_help );
 
    mainEntries->addLayout( CBTimeLayout, row,   0 );
    mainEntries->addWidget( LEtime,       row,   1 );
@@ -79,11 +77,7 @@ SM_Config::SM_Config( SM_Settings* setngs, QString dta, QRect geometry )
                 LEdate       = widgetsPtr->sm_lineedit( dateFormat );
                 PBdate       = widgetsPtr->sm_pushbutton( tr( "Help" ) );
 
-   CBdate->setFont( oldfont );
-   LEdate->setFont( oldfont );
-   PBdate->setFont( oldfont );
-
-   connect( PBdate, SIGNAL( clicked() ), this, SLOT( date_help() ) );
+   connect( PBdate, &QPushButton::clicked, this, &SM_Config::date_help );
 
    mainEntries->addLayout( CBDateLayout, row,   0 );
    mainEntries->addWidget( LEdate,       row,   1 );
@@ -96,10 +90,7 @@ SM_Config::SM_Config( SM_Settings* setngs, QString dta, QRect geometry )
                    widgetsPtr->sm_checkbox( "uptime", CBuptime, uptimeChecked );
                 PBuptime       = widgetsPtr->sm_pushbutton( tr( "Help" ) );
 
-   CBuptime->setFont( oldfont );
-   PBuptime->setFont( oldfont );
-
-   connect( PBuptime, SIGNAL( clicked() ), this, SLOT( uptime_help() ) );
+   connect( PBuptime, &QPushButton::clicked, this, &SM_Config::uptime_help );
 
    mainEntries->addLayout( CBuptimeLayout, row,   0 );
    mainEntries->addWidget( PBuptime,       row++, 2 );
@@ -114,11 +105,7 @@ SM_Config::SM_Config( SM_Settings* setngs, QString dta, QRect geometry )
                    widgetsPtr->sm_checkbox( "CPU Bar",  CBcpuBar, CPUbar );
                 PBcpu          = widgetsPtr->sm_pushbutton( tr( "Help" ) );
 
-   CBcpu   ->setFont( oldfont );
-   CBcpuBar->setFont( oldfont );
-   PBcpu   ->setFont( oldfont );
-
-   connect( PBcpu, SIGNAL( clicked() ), this, SLOT( cpu_help() ) );
+   connect( PBcpu, &QPushButton::clicked, this, &SM_Config::cpu_help );
 
    mainEntries->addLayout( CBcpuLayout,    row,   0 );
    mainEntries->addLayout( CBcpuBarLayout, row,   1 );
@@ -131,10 +118,7 @@ SM_Config::SM_Config( SM_Settings* setngs, QString dta, QRect geometry )
                    widgetsPtr->sm_checkbox( "Memory Bar", CBmemory, memoryChecked );
                 PBmemory       = widgetsPtr->sm_pushbutton( tr( "Help" ) );
 
-   CBmemory->setFont( oldfont );
-   PBmemory->setFont( oldfont );
-   
-   connect( PBmemory, SIGNAL( clicked() ), this, SLOT( memory_help() ) );
+   connect( PBmemory, &QPushButton::clicked, this, &SM_Config::memory_help );
 
    mainEntries->addLayout( CBmemoryLayout, row,   0 );
    mainEntries->addWidget( PBmemory,       row++, 2 );
@@ -151,7 +135,7 @@ SM_Config::SM_Config( SM_Settings* setngs, QString dta, QRect geometry )
 
    otherSettings->addWidget( lbl_font, row,   0 );
    otherSettings->addWidget( pb_font,  row++, 1 );
-   connect( pb_font, SIGNAL( clicked() ), this, SLOT( update_font() ) );
+   connect( pb_font, &QPushButton::clicked, this, &SM_Config::update_font );
 
    // Color Preferences
    lbl_color = widgetsPtr->sm_label(      tr( "Color Preferences:" ) );
@@ -159,7 +143,7 @@ SM_Config::SM_Config( SM_Settings* setngs, QString dta, QRect geometry )
 
    otherSettings->addWidget( lbl_color, row,   0 );
    otherSettings->addWidget( pb_color,  row++, 1 );
-   connect( pb_color, SIGNAL( clicked() ), this, SLOT( update_colors() ) );
+   connect( pb_color, &QPushButton::clicked, this, &SM_Config::update_colors );
 
    // Temperature Preferences
    lbl_temps = widgetsPtr->sm_label(      tr( "Temperature Preferences:" ) );
@@ -167,17 +151,17 @@ SM_Config::SM_Config( SM_Settings* setngs, QString dta, QRect geometry )
 
    otherSettings->addWidget( lbl_temps, row,   0 );
    otherSettings->addWidget( pb_temps,  row++, 1 );
-   connect( pb_temps, SIGNAL( clicked() ), this, SLOT( update_temps() ) );
+   connect( pb_temps, &QPushButton::clicked, this, &SM_Config::update_temps );
 
    // Pushbuttons
    //pb_help = sm_pushbutton( tr( "Help" ) );
    //connect( pb_help, SIGNAL( clicked() ), this, SLOT( help() ) );
    
    pb_apply = widgetsPtr->sm_pushbutton( tr( "Apply" ) );
-   connect( pb_apply, SIGNAL( clicked() ), this, SLOT( apply() ) );
+   connect( pb_apply, &QPushButton::clicked, this, &SM_Config::apply );
 
    pb_exit = widgetsPtr->sm_pushbutton( tr( "Exit" ) );
-   connect( pb_exit, SIGNAL( clicked() ), this, SLOT( close() ) );
+   connect( pb_exit, &QPushButton::clicked, this, &SM_Config::close );
 
    QBoxLayout* buttons = new QHBoxLayout();
    buttons->addWidget( pb_apply  );
@@ -188,17 +172,17 @@ SM_Config::SM_Config( SM_Settings* setngs, QString dta, QRect geometry )
    topbox->addLayout( buttons );
    setLayout( topbox);
 
+   // Set the fonts of all widgets in this dialog (the plain base font)
    update_local();
 
    // Place the window to the left or right of the parent
    // depending on the position on the screen
-   int   width = parentGeom.width();
-   int   newx;
+   QScreen* scr  = QGuiApplication::screenAt( parentGeom.center() );
+   int      left = scr ? scr->availableGeometry().left() : 0;
+   int      newx = parentGeom.left() - sizeHint().width() - 100;
 
-   if ( parentGeom.left() - width - 100 < 0 )
-      newx = parentGeom.x() + width + 100;
-   else
-      newx = parentGeom.x() - this->geometry().width() - 100;
+   if ( newx < left )
+      newx = parentGeom.right() + 100;
 
    this->move( newx, parentGeom.y() );
 }
@@ -211,16 +195,13 @@ SM_Config::SM_Config( SM_Settings* setngs, QString dta, QRect geometry )
 // Display refresh help info
 void SM_Config::refresh_help( void )
 {
-   QString* text = new QString(
-         "Set this value to the desired refresh interval.\n" );
-
-   msg_box( text, 60 );
+   msg_box( "Set this value to the desired refresh interval.\n", 60 );
 }
 
 // Display time help info
 void SM_Config::time_help( void )
 {
-   QString* text = new QString(
+   msg_box(
          "Select how time is displayed.\n"
          "Format:\n"
          "h        The hour without a leading zero\n"
@@ -233,15 +214,13 @@ void SM_Config::time_help( void )
          "ss       The whole second, with a leading zero\n"
          "AP or A  Use AM/PM display.\n"
          "ap or a  Use am/pm display.\n"
-         "t        The timezone (for example 'CEST')" );
-
-   msg_box( text, 60 );
+         "t        The timezone (for example 'CEST')", 60 );
 }
 
 // Display date help info
 void SM_Config::date_help( void )
 {
-   QString* text = new QString(
+   msg_box(
          "Select how date is displayed.\n"
          "Format:\n"
          "d     The day as a number without a leading zero (1 to 31)\n"
@@ -253,50 +232,40 @@ void SM_Config::date_help( void )
          "MMM   The abbreviated month name (e.g. 'Jan' to 'Dec').\n"
          "MMMM  The long month name (e.g. 'January' to 'December').\n"
          "yy    The year as a two digit number (00 to 99)\n"
-         "yyyy  The year as a four digit number.\n" );
-
-   msg_box( text, 60 );
+         "yyyy  The year as a four digit number.\n", 60 );
 }
 
 // Display cpu help info
 void SM_Config::cpu_help( void )
 {
-   QString* text = new QString(
-         "Select whether CPU Load and/or CPU Progress bar is displayed." );
 
-   msg_box( text, 45 );
+   msg_box( "Select whether CPU Load and/or CPU Progress bar is displayed.", 45 );
 }
 
 // Display uptime help info
 void SM_Config::uptime_help( void )
 {
-   QString* text = new QString(
-         "Select whether uptime is displayed." );
-
-   msg_box( text, 45 );
+   msg_box( "Select whether uptime is displayed.", 45 );
 }
 
 // Display memory usage help info
 void SM_Config::memory_help( void )
 {
-   QString* text = new QString(
-         "Select whether memory usage is displayed." );
-
-   msg_box( text, 45 );
+   msg_box( "Select whether memory usage is displayed.", 45 );
 }
 
 // Present text in a QMessageBox with specified width in characters
-void SM_Config::msg_box( QString* text, int width )
+void SM_Config::msg_box( const QString& text, int width )
 {
    // Trying to get the message box wider than about 60 characters 
    // does not seem to work
    QFont        font     = QFontDatabase::systemFont(QFontDatabase::FixedFont);
    int          boxWidth = QFontMetrics( font ).averageCharWidth() * width;
-   QMessageBox  MB;
+   QMessageBox  MB( this );
    QSpacerItem* spacer   = new QSpacerItem( boxWidth, 0, QSizePolicy::Minimum, 
                                             QSizePolicy::Expanding );
    
-   MB.setText( *text );
+   MB.setText( text );
    MB.setFont( font );
    QGridLayout* MBlayout = (QGridLayout*)MB.layout();
    MBlayout->addItem( spacer, MBlayout->rowCount(), 0, 1, MBlayout->columnCount() );
@@ -325,26 +294,29 @@ void SM_Config::sendFonts( void )
 
 void SM_Config::update_font( void )
 {
-   SM_Font* font = new SM_Font( settingsPtr );
+   SM_Font* font = new SM_Font( settingsPtr ); // owned by config
+   font->setParent( this, Qt::Window );        // blocks config
    font->setWindowModality( Qt::WindowModal );  
    font->show();
-   connect( font, SIGNAL( updateFonts() ), this, SLOT( sendFonts() ) );
+   connect( font, &SM_Font::updateFonts, this, &SM_Config::sendFonts );
 }
 
 void SM_Config::update_colors( void )
 {
    SM_Color* colors = new SM_Color( settingsPtr );  
+   colors->setParent( this, Qt::Window );        // blocks config
    colors->setWindowModality( Qt::WindowModal );  
    colors->show();
-   connect( colors, SIGNAL( updateColors() ), this, SLOT( sendColors() ) );
+   connect( colors, &SM_Color::updateColors, this, &SM_Config::sendColors );
 }
 
 void SM_Config::update_temps( void )
 {
    SM3_Temps* temps = new SM3_Temps( settingsPtr, data );  
+   temps->setParent( this, Qt::Window );        // blocks config
    temps->setWindowModality( Qt::WindowModal );  
    temps->show();
-   connect( temps, SIGNAL( updateTemps() ), this, SLOT( sendTemps() ) );
+   connect( temps, &SM3_Temps::updateTemps, this, &SM_Config::sendTemps );
 }
 
 void SM_Config::update_local( void )
@@ -388,14 +360,14 @@ void SM_Config::update_local( void )
 void SM_Config::apply( void )
 {
    settingsPtr->setValue( "refreshInterval", 
-                                        QString::number( SBrefresh->value() ) );
+                          QString::number( SBrefresh->value() ) );
 
-   settingsPtr->setValue( "useTime",    bool2string( CBtime->isChecked()   ) );
-   settingsPtr->setValue( "useDate",    bool2string( CBdate->isChecked()   ) );
-   settingsPtr->setValue( "useUptime",  bool2string( CBuptime->isChecked() ) );
-   settingsPtr->setValue( "useCPU",     bool2string( CBcpu->isChecked()    ) );
-   settingsPtr->setValue( "useCPUbar",  bool2string( CBcpuBar->isChecked() ) );
-   settingsPtr->setValue( "useMemory",  bool2string( CBmemory->isChecked() ) );
+   settingsPtr->setBoolValue( "useTime",   CBtime->isChecked()   );
+   settingsPtr->setBoolValue( "useDate",   CBdate->isChecked()   );
+   settingsPtr->setBoolValue( "useUptime", CBuptime->isChecked() );
+   settingsPtr->setBoolValue( "useCPU",    CBcpu->isChecked()    );
+   settingsPtr->setBoolValue( "useCPUbar", CBcpuBar->isChecked() );
+   settingsPtr->setBoolValue( "useMemory", CBmemory->isChecked() );
 
    settingsPtr->setValue( "timeFormat", LEtime->text() );
    settingsPtr->setValue( "dateFormat", LEdate->text() );
@@ -404,8 +376,3 @@ void SM_Config::apply( void )
    emit updateEntries();
 }
 
-QString SM_Config::bool2string( bool value )
-{
-   if ( value ) return "true";
-   else         return "false";
-}

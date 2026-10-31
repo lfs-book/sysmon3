@@ -1,6 +1,6 @@
-//! \file sm_font.cpp
-#include "sysmon3.h"
+//! \file sm3_color.cpp
 #include "sm3_font.h"
+#include "sm3_color.h"
 
 SM_Color::SM_Color( SM_Settings* setngs )
 {
@@ -27,11 +27,11 @@ SM_Color::SM_Color( SM_Settings* setngs )
 
    pb_label_color = widgetsPtr->sm_pushbutton( tr( "Change\nLabel Color" ) );
    labelLayout->addWidget( pb_label_color, 0, 0 );
-   connect( pb_label_color, SIGNAL( clicked() ), SLOT( label_color() ) );
+   connect( pb_label_color, &QPushButton::clicked, this, &SM_Color::label_color );
 
    pb_label_background = widgetsPtr->sm_pushbutton( tr( "Change\nLabel Background" ) );
    labelLayout->addWidget( pb_label_background, 0 , 1 );
-   connect( pb_label_background, SIGNAL( clicked() ), SLOT( label_background() ) );
+   connect( pb_label_background, &QPushButton::clicked, this, &SM_Color::label_background );
 
    sample_label = widgetsPtr->sm_label( "Sample Label" );
    sample_label->setFont( QFont( family, fontSize, weight ) );
@@ -40,11 +40,11 @@ SM_Color::SM_Color( SM_Settings* setngs )
    // Data color
    pb_data_color = widgetsPtr->sm_pushbutton( tr( "Change\nData Color" ) );
    labelLayout->addWidget( pb_data_color, 1, 0 );
-   connect( pb_data_color, SIGNAL( clicked() ), SLOT( data_color() ) );
+   connect( pb_data_color, &QPushButton::clicked, this, &SM_Color::data_color );
 
    pb_data_background = widgetsPtr->sm_pushbutton( tr( "Change\nData Background" ) );
    labelLayout->addWidget( pb_data_background, 1, 1 );
-   connect( pb_data_background, SIGNAL( clicked() ), SLOT( data_background() ) );
+   connect( pb_data_background, &QPushButton::clicked, this, &SM_Color::data_background );
 
    sample_data = widgetsPtr->sm_label( "Sample Data" );
    sample_data->setFont( QFont( family, fontSize, weight ) );
@@ -53,11 +53,11 @@ SM_Color::SM_Color( SM_Settings* setngs )
    // ProgressBar color
    pb_progress_color = widgetsPtr->sm_pushbutton( tr( "Change\nProgress Color" ) );
    labelLayout->addWidget( pb_progress_color, 2, 0 );
-   connect( pb_progress_color, SIGNAL( clicked() ), SLOT( progress_color() ) );
+   connect( pb_progress_color, &QPushButton::clicked, this, &SM_Color::progress_color );
 
    pb_progress_background = widgetsPtr->sm_pushbutton( tr( "Change\nProgress Background" ) );
    labelLayout->addWidget( pb_progress_background, 2, 1 );
-   connect( pb_progress_background, SIGNAL( clicked() ), SLOT( progress_background() ) );
+   connect( pb_progress_background, &QPushButton::clicked, this, &SM_Color::progress_background );
 
    sample_progress = new QProgressBar();
    sample_progress->setRange( 0, 100 );
@@ -69,18 +69,18 @@ SM_Color::SM_Color( SM_Settings* setngs )
 
    // Default
    pb_default = widgetsPtr->sm_pushbutton( tr( "Set Default Colors" ) );
-   connect( pb_default, SIGNAL( clicked() ), SLOT( setDefault() ) );
+   connect( pb_default, &QPushButton::clicked, this, &SM_Color::setDefault );
    topbox->addWidget( pb_default );
    
    // Buttons
    pb_apply = widgetsPtr->sm_pushbutton( tr( "Apply" ) );
-   connect( pb_apply, SIGNAL( clicked() ), SLOT( apply() ) );
+   connect( pb_apply, &QPushButton::clicked, this, &SM_Color::apply );
 
    //pb_help = sm_pushbutton( tr( "Help" ) );
    //connect( pb_help, SIGNAL( clicked() ), SLOT( help() ) );
 
    pb_exit = widgetsPtr->sm_pushbutton( tr( "Exit" ) );
-   connect( pb_exit, SIGNAL( clicked() ), SLOT( close() ) );
+   connect( pb_exit, &QPushButton::clicked, this, &SM_Color::close );
 
    QBoxLayout* buttons = new QHBoxLayout();
 
@@ -93,131 +93,12 @@ SM_Color::SM_Color( SM_Settings* setngs )
    redraw();  // Set colors for examples
 }
 
-void SM_Color::setDefault( void )
-{
-   QPalette p = sample_label->palette();
-
-   //  Get defaults from SM_Settings
-   QColor labelColor    = QColor( settingsPtr->getDefault( "labelColor"    ) );
-   QColor labelBg       = QColor( settingsPtr->getDefault( "labelBg"       ) );
-   QColor dataColor     = QColor( settingsPtr->getDefault( "dataColor"     ) );
-   QColor dataBg        = QColor( settingsPtr->getDefault( "dataBg"        ) );
-   QColor progressColor = QColor( settingsPtr->getDefault( "progressColor" ) );
-   QColor progressBg    = QColor( settingsPtr->getDefault( "progressBg"    ) );
-
-   // The Active group is used for the window that has keyboard focus.
-   p.setColor( QPalette::Active,   QPalette::Window,     dataBg        ); 
-   p.setColor( QPalette::Active,   QPalette::WindowText, dataColor     ); 
-   p.setColor( QPalette::Active,   QPalette::Highlight,  progressColor ); 
-   p.setColor( QPalette::Active,   QPalette::Base,       progressBg    );
-
-   //The Inactive group is used for other windows.
-   p.setColor( QPalette::Inactive, QPalette::Window,     dataBg        );
-   p.setColor( QPalette::Inactive, QPalette::WindowText, dataColor     );
-   p.setColor( QPalette::Inactive, QPalette::Highlight,  progressColor );
-   p.setColor( QPalette::Inactive, QPalette::Base,       progressBg    );
-
-   sample_data    ->setPalette( p );
-   sample_progress->setPalette( p );
-
-   p.setColor( QPalette::Active,   QPalette::Window,     labelBg       ); 
-   p.setColor( QPalette::Active,   QPalette::WindowText, labelColor    ); 
-
-   p.setColor( QPalette::Inactive, QPalette::Window,     labelBg       );
-   p.setColor( QPalette::Inactive, QPalette::WindowText, labelColor    );
-
-   sample_label ->setPalette( p );
-}
-
-void SM_Color::label_color( void )
-{
-   QPalette p = sample_label->palette();
-                                      
-   QColor oldColor = p.color( QPalette::Active, QPalette::WindowText);
-   QColor newColor = QColorDialog::getColor(oldColor, this );
-
-   if ( ! newColor.isValid() ) return;
-
-   p.setColor( QPalette::Active,   QPalette::WindowText, newColor );
-   p.setColor( QPalette::Inactive, QPalette::WindowText, newColor );
-   sample_label->setPalette( p );
-}
-
-void SM_Color::label_background( void )
-{
-   QPalette p = sample_label->palette();
-
-   // Background is QPalette::Window
-   QColor oldColor = p.color( QPalette::Active, QPalette::Window);
-   QColor newColor = QColorDialog::getColor(oldColor, this );
-
-   if ( ! newColor.isValid() ) return;
-
-   p.setColor( QPalette::Active,   QPalette::Window, newColor );
-   p.setColor( QPalette::Inactive, QPalette::Window, newColor );
-   sample_label->setPalette( p );
-}
-
-void SM_Color::data_color( void )
-{
-   QPalette p = sample_data->palette();
-   
-   QColor oldColor  = p.color( QPalette::Active, QPalette::WindowText);
-   QColor newColor  = QColorDialog::getColor(oldColor, this );
-
-   if ( ! newColor.isValid() ) return;
-
-   p.setColor( QPalette::Active,   QPalette::WindowText, newColor );
-   p.setColor( QPalette::Inactive, QPalette::WindowText, newColor );
-   sample_data->setPalette( p );
-}
-
-void SM_Color::data_background( void )
-{
-   QPalette p = sample_data->palette();
-  
-   QColor oldColor  = p.color( QPalette::Active, QPalette::Window);
-   QColor newColor  = QColorDialog::getColor(oldColor, this );
-
-   if ( ! newColor.isValid() ) return;
-
-   p.setColor( QPalette::Active,   QPalette::Window, newColor );
-   p.setColor( QPalette::Inactive, QPalette::Window, newColor );
-   sample_data->setPalette( p );
-}
-
-void SM_Color::progress_color( void )
-{
-   QPalette p = sample_progress->palette();
- 
-   QColor oldColor  = p.color( QPalette::Active, QPalette::WindowText);
-   QColor newColor  = QColorDialog::getColor(oldColor, this );
-
-   if ( ! newColor.isValid() ) return;
-
-   p.setColor( QPalette::Active,   QPalette::Highlight, newColor );
-   p.setColor( QPalette::Inactive, QPalette::Highlight, newColor );
-   sample_progress->setPalette( p );
-}
-
-void SM_Color::progress_background( void )
-{
-   QPalette p = sample_progress->palette();
-
-   QColor oldColor  = p.color( QPalette::Active, QPalette::Window);
-   QColor newColor  = QColorDialog::getColor(oldColor, this );
-
-   if ( ! newColor.isValid() ) return;
-
-   p.setColor( QPalette::Active,   QPalette::Base, newColor );
-   p.setColor( QPalette::Inactive, QPalette::Base, newColor );
-   sample_progress->setPalette( p );
-}
-
-void SM_Color::update( int /* unused */ )
-{
-   redraw();
-}
+void SM_Color::label_color        () { pick( sample_label,    QPalette::WindowText ); }
+void SM_Color::label_background   () { pick( sample_label,    QPalette::Window     ); }
+void SM_Color::data_color         () { pick( sample_data,     QPalette::WindowText ); }
+void SM_Color::data_background    () { pick( sample_data,     QPalette::Window     ); }
+void SM_Color::progress_color     () { pick( sample_progress, QPalette::Highlight  ); }
+void SM_Color::progress_background() { pick( sample_progress, QPalette::Base       ); }
 
 void SM_Color::apply()
 {
@@ -247,38 +128,55 @@ void SM_Color::apply()
    emit updateColors();
 }
 
-//void SM_Font::help()
-//{
-// US_Help* help = new US_Help();
-// help->show_help( "manual/usfont.html" );
-//}
-
-void SM_Color::redraw( void )
+void SM_Color::pick( QWidget* sample, QPalette::ColorRole role )
 {
-   QString lblFg      = settingsPtr->value( "labelColor"    );
-   QString lblBg      = settingsPtr->value( "labelBg"       );
-                                                          
-   QString dataFg     = settingsPtr->value( "dataColor"     );
-   QString dataBg     = settingsPtr->value( "dataBg"        );
+   QPalette p        = sample->palette();
+   QColor   newColor = QColorDialog::getColor( p.color( role ), this );
+   if ( ! newColor.isValid() ) return;   // Canceled
 
-   QString progressFg = settingsPtr->value( "progressColor" );
-   QString progressBg = settingsPtr->value( "progressBg"    );
+   p.setColor( role, newColor );         // All color groups
+   sample->setPalette( p );
+}
 
-   QPalette p;
-   p.setColor( QPalette::Active, QPalette::WindowText, QColor( lblFg ) );
-   p.setColor( QPalette::Active, QPalette::Window,     QColor( lblBg ) );
-
+// Show colors in the three samples, for all color groups
+void SM_Color::showColors( const QString& lblFg,  const QString& lblBg,
+                           const QString& dataFg, const QString& dataBg,
+                           const QString& progFg, const QString& progBg )
+{
+   QPalette p = sample_label->palette();
+   p.setColor( QPalette::WindowText, QColor( lblFg ) );
+   p.setColor( QPalette::Window,     QColor( lblBg ) );
    sample_label->setPalette( p );
 
-   p.setColor( QPalette::Active, QPalette::WindowText, QColor( dataFg ) );
-   p.setColor( QPalette::Active, QPalette::Window,     QColor( dataBg ) );
-
+   p = sample_data->palette();
+   p.setColor( QPalette::WindowText, QColor( dataFg ) );
+   p.setColor( QPalette::Window,     QColor( dataBg ) );
    sample_data->setPalette( p );
 
-   p.setColor( QPalette::Active, QPalette::Highlight, QColor( progressFg ) );
-   p.setColor( QPalette::Active, QPalette::Base,      QColor( progressBg ) );
-
+   p = sample_progress->palette();
+   p.setColor( QPalette::Highlight, QColor( progFg ) );
+   p.setColor( QPalette::Base,      QColor( progBg ) );
    sample_progress->setPalette( p );
+}
 
-   this->repaint();
+// Show the saved colors
+void SM_Color::redraw( void )
+{
+   showColors( settingsPtr->value( "labelColor"    ), 
+               settingsPtr->value( "labelBg"       ),
+               settingsPtr->value( "dataColor"     ), 
+               settingsPtr->value( "dataBg"        ),
+               settingsPtr->value( "progressColor" ), 
+               settingsPtr->value( "progressBg"    ) );
+}
+
+// Show the defaults; Apply saves them
+void SM_Color::setDefault( void )
+{
+   showColors( settingsPtr->getDefault( "labelColor"    ), 
+               settingsPtr->getDefault( "labelBg"       ),
+               settingsPtr->getDefault( "dataColor"     ), 
+               settingsPtr->getDefault( "dataBg"        ),
+               settingsPtr->getDefault( "progressColor" ), 
+               settingsPtr->getDefault( "progressBg"    ) );
 }

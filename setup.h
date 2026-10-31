@@ -1,14 +1,10 @@
 #ifndef SETUP_H
 #define SETUP_H
 
-#include <QFont>
-#include <QLabel>
+#include <QFrame>
 #include <QLayout>
-#include <QMainWindow>
-#include <QPoint>
-#include <QProgressBar>
-#include <QSettings>
 #include <QListWidget>
+#include <QLineEdit>
 
 class setup : public QFrame
 {
@@ -16,7 +12,7 @@ class setup : public QFrame
 
 public:
    setup();
-   ~setup(){};
+   ~setup(){}
 
 private:
    QVBoxLayout* layout;       // Top level layout

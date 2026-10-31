@@ -1,3 +1,33 @@
+sysmon3-3.1.0
+
+- This release requires sysmond-1.1.0 or later.  sysmond now ignores
+  requests shorter than 1024 bytes, and sysmon3 pads its requests to 
+  match.
+
+- All the files in the package have been updated to provide more
+  robust handling of hardware or network problems.  There were also
+  many changes to provide more concise and readable code.
+
+  - Fix crashes when display items are turned off in the configuration
+    window, on a bad or missing reply from sysmond, and on an empty host list.
+  - Fix sysmon3 showing data one refresh behind after a late reply.
+  - Report "Connection refused" immediately when sysmond is not running.
+  - Retry the host lookup if the network is not up when sysmon3 starts.
+  - The saved refresh interval is now used at startup.
+  - Fix temperature sensors with similar names (e.g. Core 1 and Core 10)
+    sharing settings, and keep sensors in numeric order.
+  - Opening the temperature dialog after a missed reply no longer erases
+    the saved sensor selection.
+  - Only one configuration window can be open at a time; its sub-windows
+    are now modal.
+  - Fix the color dialog samples and the oversized spin box in the font dialog.
+
+- Support for qt5 has been dropped.
+
+- The user interface has not changed.
+
+- Changes were made with substantial help from Claude.
+
 sysmon3-3.0.4
 
 - Fix a udp problem when restarting after a server interruption.
@@ -24,4 +54,4 @@ This is a bug release.
 - Eliminate a segfault when the application exits before a 
   server is established.
 
-- Ensure the timout for a UDP reply is set properly.
+- Ensure the timeout for a UDP reply is set properly.

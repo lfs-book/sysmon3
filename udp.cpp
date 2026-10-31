@@ -1,116 +1,102 @@
 #include <QHostInfo>
+#include <QHostAddress>
+
 #include <string.h>
+#include <errno.h>
 #include <arpa/inet.h>
+#include <sys/socket.h>
 #include <sys/time.h>
 
 #include "udp.h"
 
-sysmonUDP::sysmonUDP( QString* server, int port ) 
+// sysmond ignores requests shorter than its largest possible reply
+// (DATA_SIZE in sysmond.h, currently 1024 bytes), so the request is
+// padded to that size.  The reply is at most DATA_SIZE bytes too.
+static const int SYSMOND_DATA_SIZE = 1024;
+
+
+sysmonUDP::sysmonUDP( QString* server, int serverPort )
+   : host( *server ), port( serverPort )
 {
-    QHostInfo hostInfo;
-    QHostInfo returnedHost = hostInfo.fromName( *server );
+    open();   // If this fails, getData() tries again later
+}
 
-    if ( returnedHost.error() != QHostInfo::NoError )
-    {
-       lookupOK = false;
-       return;
-    }
-
-    lookupOK = true;
-
-    QString ip;
-
-    if ( *server == "localhost" )
-       ip = "127.0.0.1";
-    else
-       ip = returnedHost.addresses().first().toString();
-
-//qDebug() << "Found address:" << ip.toLatin1();     
-
-     struct timeval tv;
-     tv.tv_sec  = 1;
-     tv.tv_usec = 0;
-
-     // server socket
-     memset( (char*) &server_socket, 0, sizeof(server_socket) );
-     server_socket.sin_family      = AF_INET;
-     server_socket.sin_port        = htons( port );
-     server_socket.sin_addr.s_addr = inet_addr( ip.toLatin1() );
-
-     udp_socket = socket( AF_INET, SOCK_DGRAM, 0);
-
-     // Make the socket time out after the timeval duration
-     setsockopt( udp_socket, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof( tv ) );
+// Look up the server and create a socket connected to it.
+//
+// A connected UDP socket only receives datagrams from the server, and
+// reports "connection refused" right away when nothing is listening on
+// the server's port, instead of waiting for the timeout.
+bool sysmonUDP::open()
+{
+   // The lookup blocks, and with the network down it can take several
+   // seconds, so after a failure don't try again for 10 seconds.
+   time_t now = time( nullptr );
+   if ( lastTry != 0 && now - lastTry < 10 ) return false;
+   lastTry = now;
+ 
+   QHostInfo info = QHostInfo::fromName( host );
+   if ( info.error() != QHostInfo::NoError ) return false;
+ 
+   // The socket is IPv4 only, so use the first IPv4 address.  The lookup
+   // may also return IPv6 addresses, e.g. ::1 for localhost.
+   for ( const QHostAddress& address : info.addresses() )
+   {
+      if ( address.protocol() != QAbstractSocket::IPv4Protocol ) continue;
+ 
+      int sock = socket( AF_INET, SOCK_DGRAM | SOCK_CLOEXEC, 0 );
+      if ( sock < 0 ) return false;
+ 
+      // server socket
+      struct sockaddr_in server_socket;
+      memset( &server_socket, 0, sizeof( server_socket ) );
+      server_socket.sin_family      = AF_INET;
+      server_socket.sin_port        = htons( port );
+      server_socket.sin_addr.s_addr = htonl( address.toIPv4Address() );
+ 
+      if ( ::connect( sock, (struct sockaddr*) &server_socket,
+                      sizeof( server_socket ) ) < 0 )
+      {
+         close( sock );
+         return false;
+      }
+      // Wait at most one second for a reply
+      struct timeval tv = { 1, 0 };
+      setsockopt( sock, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof( tv ) );
+ 
+      udp_socket = sock;
+      lastTry    = 0;
+      return true;
+   }
+ 
+   return false;   // No IPv4 address
 }
 
 QString sysmonUDP::getData()
 {
-     struct timeval tp; // debug
-     struct timeval tv;
-     tv.tv_sec  = 1;
-     tv.tv_usec = 0;
+   if ( udp_socket < 0 && ! open() ) return "Bad IP lookup";
 
-    if ( ! lookupOK ) return "Bad IP lookup";
+   // Throw away anything already waiting: a reply that arrived after an
+   // earlier request timed out.  Otherwise this request would get that
+   // old reply, and every later request the one before it.  This also
+   // clears a pending "connection refused" from an earlier request.
+   char discard[ 16 ];
+   while ( recv( udp_socket, discard, sizeof( discard ), MSG_DONTWAIT ) >= 0 );
 
-//    QByteArray data_out = QByteArray( "Send data" );
+   // Ask for data.  The content is ignored; the rest is zeros.
+   static const char request[ SYSMOND_DATA_SIZE ] = "Send data";
 
-//qDebug() << "Size of data_out should be 9: " << data_out.size();
+   if ( send( udp_socket, request, sizeof( request ), 0 ) < 0 )
+      return "UDP out failed";
 
-    // Ask for data
-    ssize_t i =
-       sendto( udp_socket,
-               "Send data",   // data_out.data(),
-               10,            // data_out.size() + 1;  Add trailing null
-               0,             // no flags
-               (struct sockaddr*)& server_socket,
-               sizeof( server_socket ) );
+   // Read the reply.  One extra byte so the string is always terminated.
+   char    reply[ SYSMOND_DATA_SIZE + 1 ];
+   ssize_t n = recv( udp_socket, reply, SYSMOND_DATA_SIZE, 0 );
 
-gettimeofday( &tp, NULL );
-//qDebug() << "Bytes sent: " << i << tp.tv_sec << tp.tv_usec;
+   if ( n < 0 )
+      return ( errno == ECONNREFUSED ) ? "Connection refused" : "Timeout";
 
-    if ( i < 0 ) return "UDP out failed";
+   // sysmond ends the reply with a NUL, but don't depend on it
+   reply[ n ] = '\0';
 
-//qDebug() << "ip:" << ip << ";  port:" << serverPort; // ok
-
-    struct sockaddr_in client_socket;
-
-    memset( (char*)& client_socket, 0, sizeof(client_socket) );
-    client_socket.sin_family      = AF_INET;
-    client_socket.sin_port        = htons( 0 );
-    client_socket.sin_addr.s_addr = htonl( INADDR_ANY );
-
-    socklen_t socket_len = sizeof(client_socket);
-    #define BUFFER_SIZE 1024
-    char data_in [ BUFFER_SIZE ];
-    memset( (char*)& data_in, 0, BUFFER_SIZE );
-
-    // Make the socket time out after the timeval duration
-    setsockopt( udp_socket, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof( tv ) );
-
-    // Now read the response
-    int n = 
-       recvfrom( udp_socket,
-                 data_in,
-                 BUFFER_SIZE,
-                 MSG_WAITALL,
-                 (struct sockaddr*)& client_socket,
-                 &socket_len );
-
-gettimeofday( &tp, NULL );
-//qDebug() << "Bytes received: " << n << tp.tv_sec << tp.tv_usec;
-//qDebug() << data_in;
-
-    if ( n < 0 )
-    {
-       //if  (errno == EAGAIN      ) qDebug() << "EAGAIN";
-       //if  (errno == EWOULDBLOCK ) qDebug() << "EWOULDBLOCK";
-       return "Timeout";
-    }
- 
-    //data_in[ n ] = '\0'; // make sure the string is properly terminated
-    QString s = QString( data_in );
-
-//qDebug() << s << "\n--- size of string:" << s.size();
-
-    return s;
+   return QString::fromUtf8( reply );
 }

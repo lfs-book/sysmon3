@@ -1,5 +1,6 @@
 #include <QApplication>
 #include <QAction>
+#include <QTime>
 #include <QTimer>
 #include <QMessageBox>
 
@@ -7,13 +8,14 @@
 #include "sm3_config.h"
 #include "setup.h"
 #include "udp.h"
+#include "version.h"
 
 int main(int argc, char *argv[])
 {  
    QApplication a(argc, argv);
    QCoreApplication::setOrganizationName("LinuxFromScratch");
    QCoreApplication::setApplicationName("sysmon3");
-   QCoreApplication::setApplicationVersion(QT_VERSION_STR);
+   QCoreApplication::setApplicationVersion(SMVERSION);
 
    QString server;
    if ( argc > 1 ) server = argv[ 1 ];
@@ -47,7 +49,7 @@ sysmon3::sysmon3( QString server )
 
    timer = new QTimer( this );
    timer->setInterval( 1000 );  // Every second by default
-   connect(timer, &QTimer::timeout, this, QOverload<>::of(&sysmon3::update));
+   connect(timer, &QTimer::timeout, this, &sysmon3::refresh );
    //timer->start();  // Do this later
 
    bool runSetup = true;
@@ -89,19 +91,29 @@ sysmon3::sysmon3( QString server )
 
 void sysmon3::config( void )
 {  
-   SM_Config* w = new SM_Config( settingsPtr, data, this->geometry() );
-   w->show();
+   // Only one configuration window at a time
+   if ( configWindow != nullptr )
+   {
+      configWindow->raise();
+      configWindow->activateWindow();
+      return;
+   }
 
-   connect( w, SIGNAL( updateEntries() ), this, SLOT( updateLayout() ) );
-   connect( w, SIGNAL( updateFonts  () ), this, SLOT( updateFont()   ) );
-   connect( w, SIGNAL( updateColors () ), this, SLOT( updateColor()  ) );
-   connect( w, SIGNAL( updateTemps  () ), this, SLOT( updateTemp()   ) );
+   SM_Config* w = new SM_Config( settingsPtr, data, this->geometry() );
+   configWindow = w;  // convenience
+
+   connect( w, &SM_Config::updateEntries, this, &sysmon3::updateLayout );
+   connect( w, &SM_Config::updateFonts,   this, &sysmon3::updateFont   );
+   connect( w, &SM_Config::updateColors,  this, &sysmon3::updateColor  );
+   connect( w, &SM_Config::updateTemps,   this, &sysmon3::updateTemp   );
+
+   configWindow->show();
 }
 
 sysmon3::~sysmon3()
 {
    // Setting values requires valid settingsPtr
-   if ( settingsPtr == NULL ) return;
+   if ( settingsPtr == nullptr ) return;
 
    position = this->pos();
    settingsPtr->setValue( "positionX", QString::number( position.x() ) );
@@ -128,10 +140,8 @@ void sysmon3::showMain( QString server )
 
 void sysmon3::setup_all( QString server )
 {
-   udp  = new sysmonUDP( &server );
-   data = udp->getData();
-
-   parse_data();
+   udp = new sysmonUDP( &server );
+   fetch();
 
    // Use server name to initialize saved data
    get_settings();
@@ -163,6 +173,11 @@ void sysmon3::setup_all( QString server )
    }
 
    this->show();
+
+   // Use the refreshInterval for queries
+   int refresh = settingsPtr->value( "refreshInterval" ).toInt();
+   timer->setInterval( qBound( 1, refresh, 9 ) * 1000 );
+
    timer->start();
    tick = 0;
 }
@@ -211,7 +226,9 @@ void sysmon3::setup_cpuLoad()
    bool useCPU    = settingsPtr->value( "useCPU" )    == "true";
    bool useCPUbar = settingsPtr->value( "useCPUbar" ) == "true";
 
-   lbl_cpu = nullptr;
+   lbl_cpu   = nullptr;
+   lbl_loads = nullptr;
+   load      = nullptr;
 
    if ( useCPU || useCPUbar )
    {
@@ -229,7 +246,7 @@ void sysmon3::setup_cpuLoad()
    {
       load = new QProgressBar();
       load->setRange( 0, 100 );
-      load->setValue( serverData.cpuPercent * 100 );
+      load->setValue( qRound( serverData.cpuPercent * 100 ) );
       load->setFont( font_normal );
 
       // Set palette
@@ -251,8 +268,8 @@ void sysmon3::setup_cpuLoad()
 void sysmon3::setup_memory()
 {
    lbl_memory = nullptr;
+   memory     = nullptr;
    if ( settingsPtr->value( "useMemory" ) != "true" ) return;
-
 
    memory = new QProgressBar();
    memory->setRange( 0, 100 );
@@ -279,6 +296,8 @@ void sysmon3::setup_memory()
 void sysmon3::setup_temps()
 {
    tempsLayout = nullptr;
+   lbl_temps   = nullptr;
+   rowKeys.clear();
 
    QStringList tempConfig = settingsPtr->readGroup( "temperatures" );
 
@@ -292,87 +311,120 @@ void sysmon3::setup_temps()
    layout->addWidget( lbl_temps );
    
    // Populate tempsLayout
-   for ( int i = 0; i < tempConfig.size(); i++ )
+   for ( const QString& entry : tempConfig )
    {
-      QString      t    = tempConfig[ i ];  // interface,sensor,label
-      QStringList  sl   = tempConfig[ i ].split( ',' );
-      QString      key  = sl[ 0 ] + "," + sl[ 1 ];
-      QString      degC = serverData.tempData[ key ];
+      QStringList  sl   = entry.split( ',' ); // interface,sensor,label
+      if ( sl.size() < 3 ) continue;          // Skip a damaged entry
 
-      // We also need to be able to map label to key for updates
-      QString displayLabel = sl[ 2 ];
-      currentTemps[ displayLabel ] = key; 
+      QString key  = sl[ 0 ] + "," + sl[ 1 ];
+      int     row = rowKeys.size();
+ 
+      // Remember the key by row, so two sensors can share a label
+      rowKeys.append( key );
 
-      tempsLayout->addWidget( label( sl[ 2 ] ), i, 0 ); // Label name
-      tempsLayout->addWidget( label( degC    ), i, 1 ); // temperature in C
+      tempsLayout->addWidget( label( sl[ 2 ]         ), row, 0 ); // Label name
+      tempsLayout->addWidget( label( tempText( key ) ), row, 1 ); // Temperature
    }
 
    // Add to main layout
    layout->addLayout( tempsLayout );
 }
 
-void sysmon3::parse_data()
+// Get new data from sysmond.  On failure, keep the previous values.
+void sysmon3::fetch()
 {
-   static int timeoutCount = 0;
-
-      if ( data == "Timeout" )
+   QString reply = udp->getData();
+   if ( parse_data( reply ) ) 
    {
-      timeoutCount++;
-
-      if ( timeoutCount > 2 )  // Three timeouts in a row is a problem
-      {
-         QMessageBox msgBox( this );
-         msgBox.setText( "The sysmond server does not seem to be running. Retry?" );
-
-         //QAbstractButton* retryButton =
-            msgBox.addButton( "Retry", QMessageBox::YesRole );
-
-         QAbstractButton* exitButton =
-            msgBox.addButton( "Exit",  QMessageBox::NoRole );
-
-         msgBox.exec();
-
-         if ( msgBox.clickedButton() == exitButton )
-            exit( EXIT_FAILURE );
-      }
-
+      data = reply;
+      failures = 0;
       return;
    }
 
-   timeoutCount = 0;  // If we get here, any timeout cleared.
+   if ( ++failures < 3 ) return;   // Three failures in a row is a problem
+
+   // msgBox.exec() runs a nested event loop.  Qt won't re-enter this
+   // timer's slot while it is still running, but stop the timer anyway
+   // so it's clear nothing is fetched while the box is open.
+   timer->stop();
+
+   QMessageBox msgBox( this );
+   msgBox.setText( "No valid reply from sysmond (" + reply.left( 80 ) + "). Retry?" );
+
+   msgBox.addButton( "Retry", QMessageBox::YesRole );
    
-   QStringList lines     = data.split( '\n', Qt::SkipEmptyParts );
+   QAbstractButton* exitButton =
+      msgBox.addButton( "Exit",  QMessageBox::NoRole );
+   msgBox.exec();
+
+   if ( msgBox.clickedButton() == exitButton )
+   {
+      // Unlike exit(), this lets the destructor save the window
+      // position.  The queued call also works during startup,
+      // before a.exec() is running.
+      QTimer::singleShot( 0, []{ QCoreApplication::exit( EXIT_FAILURE ); } );
+      // Note: the []{...} construct is a C++ lambda (unnamed function)
+      // The [] contains the local variables for the function (none)
+      // The {} contains the function body
+      return;
+   }
+
+   failures = 0;
+   timer->start();
+}
+
+// Parse a reply from sysmond into serverData.  Returns false, leaving
+// serverData unchanged, if data is not a valid reply.  This includes
+// the error strings from sysmonUDP::getData() such as "Timeout".
+//
+// <host>;time:<time>;uptime:<s>;load:<1 5 15>;cpu%:<0.00-1.00>;mem%:<0-100>
+// interface;<interface name>,<sensor1>:value1,[<sensor#>:value#...]
+// ...
+bool sysmon3::parse_data( const QString& reply )
+{
+   QStringList lines = reply.split( '\n', Qt::SkipEmptyParts );
+   if ( lines.isEmpty() ) return false;
+
    QStringList basicInfo = lines.at( 0 ).split( ';' );
+   if ( basicInfo.size() < 6 ) return false;
 
+   // Get the value of a "name:value" field, checking the name
+   auto field = [ &basicInfo ]( int i, const QString& name, QString& value )
+   {
+      if ( ! basicInfo.at( i ).startsWith( name + ':' ) ) return false;
+      value = basicInfo.at( i ).mid( name.size() + 1 );
+      return true;
+   };
+
+   QString time, uptime, loads, cpu, mem;
+
+   if ( ! field( 1, "time",   time   ) ||
+        ! field( 2, "uptime", uptime ) ||
+        ! field( 3, "load",   loads  ) ||
+        ! field( 4, "cpu%",   cpu    ) ||
+        ! field( 5, "mem%",   mem    ) )
+      return false;
+
+   // Parse "Sun Oct  6 14:31:31 2024 CST"
+   QStringList items = time.split( ' ', Qt::SkipEmptyParts );
+   if ( items.size() < 6 ) return false;
+
+   // Everything checked; store it
    serverData.server     = basicInfo.at( 0 );
-   
-   // Parse "time:Sun Oct  6 14:31:31 2024 CST"
-   QString s             = basicInfo.at( 1 );
-   QStringList items     = s.split( " ", Qt::SkipEmptyParts);
 
-   QString dom           = items.at( 0 );
-   dom.replace(0, 5, "");                  // remove "time:"
-
-   serverData.date       = dom           + " " + 
-                           items.at( 1 ) + " " + 
+   serverData.date       = items.at( 0 ) + " " +
+                           items.at( 1 ) + " " +
                            items.at( 2 ) + " " +
                            items.at( 4 );
 
    serverData.time       = items.at( 3 );
    serverData.tz         = items.at( 5 );
 
-   // Parse "uptime:10358266.36";
-   QString     seconds   = basicInfo.at( 2 ).split( ':' ).at( 1 );;
-   serverData.uptime     = seconds.split( '.' ).at( 0 ).toLongLong();
-
-   // Parse "load:0.36 0.33 0.34"
-   serverData.load       = basicInfo.at( 3 ).split( ':' ).at( 1 );
-
-   // Parse "cpu%:0.02" 
-   serverData.cpuPercent = basicInfo.at( 4 ).split( ':' ).at( 1 ).toFloat();
-
-   // Parse "mem%:13.20"
-   serverData.memPercent = basicInfo.at( 5 ).split( ':' ).at( 1 ).toFloat();
+   // "10358266.36" -- whole seconds only
+   serverData.uptime     = uptime.section( '.', 0, 0 ).toULongLong();
+   serverData.load       = loads;
+   serverData.cpuPercent = cpu.toDouble();
+   serverData.memPercent = mem.toDouble();
 
    // Parse interfaces/temperatures
    serverData.tempData.clear();
@@ -380,20 +432,24 @@ void sysmon3::parse_data()
    // line format: interface;<interface name>,<sensor1>:value1,[<sensor#>:value#...] 
    for ( int i = 1; i < lines.size(); i++ )
    {
-      QStringList interface     = lines[ i ].split( ';' );
-      if ( interface[ 0 ] != "interface" )
-         continue;
-      
-      QStringList tempData      = interface[ 1 ].split( ',' );
-      QString     interfaceName = tempData[ 0 ];
+      if ( ! lines.at( i ).startsWith( "interface;" ) ) continue;
+
+      // split() always returns at least one element
+      QStringList tempData      = lines.at( i ).mid( 10 ).split( ',' );
+      QString     interfaceName = tempData.at( 0 );
 
       for ( int j = 1; j < tempData.size(); j++ )
       {
-         QStringList sensorData     = tempData[ j ].split( ':' );
-         QString     key            = interfaceName + "," + sensorData[ 0 ];
-         serverData.tempData[ key ] = sensorData[ 1 ];
+         // Split at the last ':' in case a sensor label contains one
+         int colon = tempData.at( j ).lastIndexOf( ':' );
+         if ( colon < 0 ) continue;
+
+         QString key = interfaceName + "," + tempData.at( j ).left( colon );
+         serverData.tempData[ key ] = tempData.at( j ).mid( colon + 1 );
       }
    }
+
+   return true;
 }
 
 void sysmon3::get_settings( void )
@@ -479,15 +535,12 @@ QLabel* sysmon3::label( const QString& labelString, int fontAdjust, int weight )
    return newLabel;
 }
 
-void sysmon3::update()
+void sysmon3::refresh()
 {
    tick++;
 
-   // Get updates
-   data = udp->getData();
-
-   // Parse and store
-   parse_data();
+   // Get updates.  On failure, the display keeps the last values.
+   fetch();
 
    // Make sure the hostname is set
    lbl_hostname->setText( serverData.server );
@@ -505,8 +558,10 @@ void sysmon3::update_time()
 {
    if ( lbl_time == nullptr ) return;
 
-   QStringList t    = serverData.time.split( ":" );
-   QTime       time = QTime( t.at(0).toInt(), t.at(1).toInt(), t.at(2).toInt() );
+   QStringList t = serverData.time.split( ":" );
+   if ( t.size() < 3 ) return;   // No valid reply yet
+
+   QTime time = QTime( t.at(0).toInt(), t.at(1).toInt(), t.at(2).toInt() );
 
    // Get the time format 
    QString format = settingsPtr->value( "timeFormat" );
@@ -515,8 +570,9 @@ void sysmon3::update_time()
 
    if ( format.contains( QChar( 't' ) ) )
    {
-      format.remove( QChar( 't' ) );  // Don't use the clients tz
-      format.remove( QChar( ' ' ) );  // and remove any spaces
+      format.remove( QChar( 't' ) );  // Don't use the client's tz
+      format = format.trimmed();      // and remove the space it leaves
+
       timeString = time.toString( format ) + " " + serverData.tz;
    }
    else
@@ -536,6 +592,8 @@ void sysmon3::update_date()
    // Create a QDate() structure so it can be formatted
    // Input is  dow, month day, year such ad  "Mon Oct 7 2024"
    QStringList sl = serverData.date.split( " ", Qt::SkipEmptyParts ); 
+   if ( sl.size() < 4 ) return;   // No valid reply yet
+
    int         year = sl.at(3).toInt();
    int         day  = sl.at(2).toInt();
 
@@ -570,43 +628,44 @@ void sysmon3::update_uptime()
 
 void sysmon3::update_cpuLoad()
 {
-   bool useCPU    = settingsPtr->value( "useCPU"    ) == "true";
-   bool useCPUbar = settingsPtr->value( "useCPUbar" ) == "true"; 
-
-   if ( useCPU )
+   if ( lbl_loads != nullptr )
       lbl_loads->setText( serverData.load );
 
-   if ( useCPUbar ) 
-      load->setValue( serverData.cpuPercent * 100 );
+   if ( load != nullptr ) 
+      load->setValue( qRound( serverData.cpuPercent * 100 ) );
 }
 
 void sysmon3::update_memory()
 {
    if ( memory == nullptr ) return;
 
-   memory->setValue( serverData.memPercent );
+   memory->setValue( qRound( serverData.memPercent ) );
 }
 
 void sysmon3::update_temps()
 {
    if ( tempsLayout == nullptr ) return;
 
-   // For each QGridBox row
-   for ( int i = 0; i < tempsLayout->rowCount(); i++ )
+   // Update the temperature in column 1 of each row
+   for ( int row = 0; row < rowKeys.size(); row++ )
    {
-     // Get displayLabel text
-     QLayoutItem* item  = tempsLayout->itemAtPosition( i, 0 );
-     QLabel*      label = qobject_cast<QLabel*>( item->widget() );
-     QString      text  = label->text();
+     QLayoutItem* item = tempsLayout->itemAtPosition( row, 1 );
+     if ( item == nullptr ) continue;
 
-     // Update temp at position ( i, 1 )
-     QString      key   = currentTemps[ text ];
-     QString      degC  = serverData.tempData[ key ] + 
-                          QString::fromUtf8( " \u00B0C" ); // degree C
-                  item  = tempsLayout->itemAtPosition( i, 1 );
-                  label = qobject_cast<QLabel*>( item->widget() );
-                  label->setText( degC );
+     QLabel* label = qobject_cast<QLabel*>( item->widget() );
+     if ( label != nullptr ) label->setText( tempText( rowKeys.at( row ) ) );
+      
    }
+}
+
+// Text for one temperature, e.g. "45 °C".  sysmond leaves out a sensor
+// it can't read, so show "--" rather than a bare unit.
+QString sysmon3::tempText( const QString& key )
+{
+   QString degC = serverData.tempData.value( key );
+   if ( degC.isEmpty() ) degC = "--";
+
+   return degC + QString::fromUtf8( " \u00B0C" ); // degree C
 }
 
 void sysmon3::updateLayout()
@@ -621,11 +680,12 @@ void sysmon3::updateLayout()
    setup_memory ();
    setup_temps  ();
 
-   update();
+   refresh();
 
-   int refresh = settingsPtr->value( "refreshInterval" ).toInt();
+   int interval = settingsPtr->value( "refreshInterval" ).toInt();
 
-   timer->setInterval( refresh * 1000 );  // Set timer interval in milliseconds
+   // Set timer interval in milliseconds
+   timer->setInterval( qBound( 1, interval, 9 ) * 1000 );
    timer->start();  
    tick = 0;
 }     
@@ -654,6 +714,11 @@ void sysmon3::delete_all( void )
    load         = nullptr; // cpu QProgressBar
    lbl_loads    = nullptr;
    lbl_memory   = nullptr;
+   memory       = nullptr; // memory QProgressBar
+   lbl_temps    = nullptr;
+   tempsLayout  = nullptr; // Deleted with the other layout items
+   rowKeys.clear();
+
 }
 
 void sysmon3::updateFont( void )
@@ -677,7 +742,7 @@ void sysmon3::updateFont( void )
    if ( lbl_cpu    != nullptr ) lbl_cpu   ->setFont( fontBold    ); // title
    if ( lbl_loads  != nullptr ) lbl_loads ->setFont( font_normal ); 
    if ( lbl_memory != nullptr ) lbl_memory->setFont( fontBold    ); // title
-
+   if ( lbl_temps  != nullptr ) lbl_temps ->setFont( fontBold    ); // title                                                                     
    // Progress bars
    if ( load       != nullptr ) load      ->setFont( font_normal );
    if ( memory     != nullptr ) memory    ->setFont( font_normal );
@@ -685,15 +750,11 @@ void sysmon3::updateFont( void )
    // Need to update fonts for temps 
    if ( tempsLayout != nullptr )
    {
-      for ( int i = 0; i < tempsLayout->rowCount(); i++ )
+      for ( int i = 0; i < tempsLayout->count(); i++ )
       {
-        QLayoutItem* item  = tempsLayout->itemAtPosition( i, 0 );
-        QLabel*      label = qobject_cast<QLabel*>( item->widget() );
-        label->setFont( font_normal );
+        QWidget* w = tempsLayout->itemAt( i )->widget();
+        if ( w != nullptr ) w->setFont( font_normal );
 
-                     item  = tempsLayout->itemAtPosition( i, 1 );
-                     label = qobject_cast<QLabel*>( item->widget() );
-        label->setFont( font_normal );
       }
    }
 }
@@ -710,6 +771,7 @@ void sysmon3::updateColor( void )
    if ( lbl_cpu    != nullptr ) lbl_cpu   ->setPalette( banner_palette ); // title
    if ( lbl_loads  != nullptr ) lbl_loads ->setPalette( data_palette ); 
    if ( lbl_memory != nullptr ) lbl_memory->setPalette( banner_palette ); // title
+   if ( lbl_temps  != nullptr ) lbl_temps ->setPalette( banner_palette ); // title
 
    // Progress bars
    if ( load       != nullptr ) load      ->setPalette( progress_palette );
@@ -718,15 +780,10 @@ void sysmon3::updateColor( void )
    // Need to update colors for temps 
    if ( tempsLayout != nullptr )
    {
-      for ( int i = 0; i < tempsLayout->rowCount(); i++ )
+      for ( int i = 0; i < tempsLayout->count(); i++ )
       {
-        QLayoutItem* item  = tempsLayout->itemAtPosition( i, 0 );
-        QLabel*      label = qobject_cast<QLabel*>( item->widget() );
-        label->setPalette( data_palette );
-
-                     item  = tempsLayout->itemAtPosition( i, 1 );
-                     label = qobject_cast<QLabel*>( item->widget() );
-        label->setPalette( data_palette );
+        QWidget* w = tempsLayout->itemAt( i )->widget();
+        if ( w != nullptr ) w->setPalette( data_palette );
       }
    }
 }

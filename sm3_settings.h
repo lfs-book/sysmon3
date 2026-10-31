@@ -3,16 +3,18 @@
 #define SM_SETTINGS_H
 
 #include <QSettings>
-#include <QListWidget>
+#include <QMap>
+#include <QString>
+#include <QStringList>
 
-//!  A class to allow encompass QSettings and server name.
+//!  A class to wraps QSettings for one server and supplies default values
 class SM_Settings 
 {
 //  Q_OBJECT
   
   public:
-    //*! \brief A suporting class for settings access
-    SM_Settings( const QString& server );
+    //*! \brief A supporting class for settings access
+    SM_Settings( const QString& );
    
     //! \brief A null destructor.
     ~SM_Settings() {}
@@ -21,10 +23,6 @@ class SM_Settings
     void        setValue    ( const QString& key, const QString& value );
     void        setBoolValue( const QString& key, const bool value );
     bool        contains    ( const QString& key ) const;
-
-    // No longer used in sysmon3
-    QStringList readArray ( const QString& key );
-    void        writeArray( const QString& key, const QStringList& values );
 
     // Used in temperatures config
     void        removeGroup( const QString& key );
@@ -35,7 +33,6 @@ class SM_Settings
     void        sync( void );
 
   private:
-    QString      server;
     QSettings    settings;
 
     const QMap< QString, QString> defaults
@@ -59,7 +56,9 @@ class SM_Settings
        {"useMemory",     "true"       },
 
        {"timeFormat",    "HH:mm:ss t" },
-       {"dateFormat",    "ddd d MMM"  }
+       {"dateFormat",    "ddd d MMM"  },
+
+       {"refreshInterval", "1"        }  // time between queries
     };
 };
 #endif

@@ -1,16 +1,7 @@
-#include <QAction>
 #include <QApplication>
-#include <QDateTime>
-#include <QFile>
-#include <QHostInfo>
-#include <QRegularExpression>
-#include <QTime>
-#include <QTimer>
-#include <QUdpSocket>
-#include <QListWidget>
-#include <QLineEdit>
 #include <QPushButton>
 #include <QMessageBox>
+#include <QSettings>
 
 #include "setup.h"
 #include "udp.h"
@@ -18,6 +9,7 @@
 setup::setup()
 {
    setWindowTitle( tr( "Setup" ) );
+   setAttribute( Qt::WA_DeleteOnClose );
 
    // Start layout   
    layout = new QVBoxLayout;
@@ -48,21 +40,22 @@ setup::setup()
 
    // LineEdit
    editLine = new QLineEdit();
+   connect( editLine, &QLineEdit::returnPressed, this, &setup::add );
    layout->addWidget( editLine );
 
    // Pushbuttons Row 1
    QHBoxLayout* row1 = new QHBoxLayout();
 
    QPushButton* pb_add = new QPushButton( tr( "Add" ) );
-   connect( pb_add, SIGNAL( clicked() ), this, SLOT( add() ) );
+   connect( pb_add, &QPushButton::clicked, this, &setup::add );
    row1->addWidget( pb_add  );
 
    QPushButton* pb_delete = new QPushButton( tr( "Delete" ) );
-   connect( pb_delete, SIGNAL( clicked() ), this, SLOT( deleteEntry() ) );
+   connect( pb_delete, &QPushButton::clicked, this, &setup::deleteEntry );
    row1->addWidget( pb_delete  );
 
    QPushButton* pb_save = new QPushButton( tr( "Save" ) );
-   connect( pb_save, SIGNAL( clicked() ), this, SLOT( save() ) );
+   connect( pb_save, &QPushButton::clicked, this, &setup::save );
    row1->addWidget( pb_save  );
 
    layout->addLayout( row1 );
@@ -71,16 +64,15 @@ setup::setup()
    QHBoxLayout* row2 = new QHBoxLayout();
 
    QPushButton* pb_test = new QPushButton( tr( "Test" ) );
-   connect( pb_test, SIGNAL( clicked() ), this, SLOT( test() ) );
+   connect( pb_test, &QPushButton::clicked, this, &setup::test );
    row2->addWidget( pb_test  );
 
    QPushButton* pb_exit = new QPushButton( tr( "Exit" ) );
-   connect( pb_exit, SIGNAL( clicked() ), this, SLOT( close() ) );
+   connect( pb_exit, &QPushButton::clicked, this, &QCoreApplication::quit );
    row2->addWidget( pb_exit  );
 
    QPushButton* pb_start = new QPushButton( tr( "Start" ) );
-   connect( pb_start, SIGNAL( clicked() ), this, SLOT( close() ) );
-   connect( pb_start, SIGNAL( clicked() ), this, SLOT( start() ) );
+   connect( pb_start, &QPushButton::clicked, this, &setup::start );
    row2->addWidget( pb_start  );
 
    layout->addLayout( row2 );
@@ -90,13 +82,16 @@ setup::setup()
 
 void setup::test( void )
 {
-   QMessageBox msgBox;
+   QMessageBox msgBox( this );
 
-   QString s = listBox->currentItem()->text(); 
+   QListWidgetItem* item = listBox->currentItem();
+   if ( item == nullptr ) return;   // Empty list or nothing selected
+
+   QString s = item->text(); 
 
    // At this point, request a response from the server.
-   sysmonUDP* u      = new sysmonUDP( &s );
-   QString    result = u->getData();
+   sysmonUDP u( &s );
+   QString   result = u.getData();
 
    if ( result == "Timeout" )
    {
@@ -109,6 +104,9 @@ void setup::test( void )
    else if ( result == "Bad IP lookup" )
      msgBox.setText( "Could not get an ip address." );
    
+   else if ( ! result.contains( ";time:" ) )
+     msgBox.setText( "Unexpected reply: " + result.left( 80 ) );
+
    else
      msgBox.setText( "The network and sysmond are OK." );
 
@@ -118,14 +116,14 @@ void setup::test( void )
 void setup::add( void )
 {
    // See if anything is there.
-   QString text = editLine->text();
+   QString text = editLine->text().trimmed();
    if ( text.size() == 0 ) return;
 
    // See if it matches something in the list box
    for ( int i = 0; i < listBox->count(); i++  )
-      if ( listBox->item( i )->text() == editLine->text() ) 
+      if ( listBox->item( i )->text() == text ) 
       {
-         QMessageBox msgBox;
+         QMessageBox msgBox( this );
          msgBox.setText( tr( "That entry is already present." ) );
          msgBox.exec();
          
@@ -133,14 +131,15 @@ void setup::add( void )
       }
 
    // Add the new entry and clear the entry box.
-   listBox->addItem( editLine->text() );
+   listBox->addItem( text );
    listBox->setCurrentRow( listBox->count() - 1 );
    editLine->clear();
 }
 
 void setup::deleteEntry( void )
 {
-   listBox->takeItem( listBox->currentRow() );
+   // nullptr if empty; delete is safe
+   delete listBox->takeItem( listBox->currentRow() );
 }
 
 void setup::save( void )
@@ -160,8 +159,15 @@ void setup::save( void )
 
 void setup::start( void )
 {
+   QListWidgetItem* item = listBox->currentItem();
+   if ( item == nullptr ) return;   // Empty list or nothing selected
+
+   // Make sure the current list is saved
+   save();
+
    // Send signal
-   emit showMainWindow( listBox->currentItem()->text() );
+   emit showMainWindow( item->text() );
+   close();
 }
 
 

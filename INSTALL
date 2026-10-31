@@ -1,4 +1,4 @@
-Prerequsites: qt6 (alternately qt5)
+Prerequisites: qt6
 
 To build sysmon3 (pronounced sys-mon-three), run:
 
@@ -26,7 +26,7 @@ by specifying the host to monitor on the command line. For example:
 
 Multiple instances of sysmon3 can be run at one time for different systems.  It
 can be even be run multiple times for the same system, but that doesn't make much
-sense.  If desired though, muliple workstations can monitor the same server.
+sense.  If desired though, multiple workstations can monitor the same server.
 
 Controlling the program:
 
@@ -38,7 +38,7 @@ A right click on the window brings up a short menu:
 The main window starts up without a frame.  The frame can be turned on and off
 with Ctrl-F.  This is useful for moving the window to the desired location.
 
-When the application exits normally, the system saves it's location (for the
+When the application exits normally, the system saves its location (for the
 current monitored system) and will use that when restarting 
 
 The configuration then allows selection, and in some cases format, of the 

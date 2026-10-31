@@ -1,8 +1,8 @@
-//! \file us_widgets.cpp
+//! \file sm3_widgets.cpp
 
 #include "sm3_widgets.h"
 
-SM_Widgets::SM_Widgets( QFont f ) : font( f )
+SM_Widgets::SM_Widgets( const QFont& f ) : font( f )
 {
 }
 
@@ -39,7 +39,6 @@ QLabel* SM_Widgets::sm_banner( const QString& labelString, int fontAdjust, QFont
    newLabel->setAlignment ( Qt::AlignCenter );
    newLabel->setFrameStyle( QFrame::WinPanel | QFrame::Raised );
    newLabel->setMidLineWidth( 2 );
-   newLabel->setFont( font );
 
    return newLabel;
 }
@@ -48,7 +47,7 @@ QLabel* SM_Widgets::sm_banner( const QString& labelString, int fontAdjust, QFont
 QPushButton* SM_Widgets::sm_pushbutton( const QString& labelString, bool enabled,
                                         int fontAdjust )
 {
-   QPushButton* button = new QPushButton( labelString.toLatin1() );
+   QPushButton* button = new QPushButton( labelString );
 
    QFont thisFont = font;
    thisFont.setPointSize( font.pointSize() + fontAdjust );
@@ -77,7 +76,7 @@ QSpinBox* SM_Widgets::sm_spinBox( const int fontAdjust )
    QSpinBox* sbox = new QSpinBox();
 
    QFont thisFont = font;
-   thisFont.setPointSize( font.weight() + fontAdjust );
+   thisFont.setPointSize( font.pointSize() + fontAdjust );
 
    sbox->setAutoFillBackground( true );
    sbox->setFont( thisFont );
@@ -111,7 +110,7 @@ QGridLayout* SM_Widgets::sm_checkbox(
    lb_spacer->setFixedWidth        ( fm.horizontalAdvance( "w" ) ); 
    lb_spacer->setAutoFillBackground( true );
 
-   cb = new QCheckBox( text.toLatin1() );
+   cb = new QCheckBox( text );
    cb->setFont              ( thisFont  );
    cb->setChecked           ( state );
    cb->setAutoFillBackground( true  );
@@ -132,7 +131,7 @@ QLineEdit* SM_Widgets::sm_lineedit( const QString& text, int fontAdjust,
 {
    QLineEdit* le = new QLineEdit();
 
-   if ( readonly ) fontAdjust++;  
+   if ( readonly ) fontAdjust++;  // Slightly larger text marks read-only
 
    QFont thisFont = font;
    thisFont.setPointSize( font.pointSize() + fontAdjust );
@@ -140,7 +139,7 @@ QLineEdit* SM_Widgets::sm_lineedit( const QString& text, int fontAdjust,
    le->setFont              ( thisFont );
    le->insert               ( text );
    le->setAutoFillBackground( true );
-   le->show();
+   le->setReadOnly          ( readonly );
 
    return le;
 }

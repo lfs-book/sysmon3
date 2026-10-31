@@ -1,4 +1,4 @@
-//! \file us_font.h
+//! \file sm3_temps.h
 #ifndef SM_TEMPS_H
 #define SM_TEMPS_H
 
@@ -6,13 +6,13 @@
 #include "sm3_config.h"
 #include "sysmon3.h"
 
-//!  A class to allow the user to select a customized font.
+//!  A class to allow the user to select appropriate temperature devices
 class SM3_Temps : public QFrame
 {
   Q_OBJECT
   
   public:
-    //*! \brief Construct the window for font selection
+    //*! \brief Construct the window for temperature device selection
     SM3_Temps( SM_Settings*, QString );
     
     //! \brief A null destructor.

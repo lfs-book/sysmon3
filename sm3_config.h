@@ -1,4 +1,4 @@
-//! \file sm_config.h
+//! \file sm3_config.h
 
 #ifndef SMCONFIG_H
 #define SMCONFIG_H
@@ -25,7 +25,7 @@ class SM_Config : public QFrame
 public:
 
    SM_Config( SM_Settings* , QString, QRect );
-   ~SM_Config() {};
+   ~SM_Config() {}
 
 private:
    SM_Settings* settingsPtr;
@@ -66,28 +66,26 @@ private:
    QLineEdit*   LEdate;
 
    void         update_local( void );
-   void         msg_box     ( QString*, int );
-   QString      bool2string ( bool );
+   void         msg_box     ( const QString&, int );
 
    QStringList  sensors;  // <Interface,Device>
 
 private slots:
 
-  void update_font  ( void );
-  void update_colors( void );
-  void update_temps ( void );
-  void refresh_help ( void );
-  void time_help    ( void );
-  void date_help    ( void );
-  void uptime_help  ( void );
-  void cpu_help     ( void );
-  void memory_help  ( void );
+   void update_font  ( void );
+   void update_colors( void );
+   void update_temps ( void );
+   void refresh_help ( void );
+   void time_help    ( void );
+   void date_help    ( void );
+   void uptime_help  ( void );
+   void cpu_help     ( void );
+   void memory_help  ( void );
 
-public slots:
-   void sendFonts();
-   void sendColors();
-   void sendTemps();
-   void apply();
+   void sendFonts    ( void );
+   void sendColors   ( void );
+   void sendTemps    ( void );
+   void apply        ( void );
 
 signals:
    void updateFonts   ( void );

@@ -1,7 +1,9 @@
-//! \file sm_font.cpp
+//! \file sm_temps.cpp
+
+#include <QCoreApplication>
+
 #include "sysmon3.h"
 #include "sm3_temps.h"
-#include "udp.h"
 
 SM3_Temps::SM3_Temps( SM_Settings* setngs, QString dta )
 {
@@ -11,14 +13,12 @@ SM3_Temps::SM3_Temps( SM_Settings* setngs, QString dta )
    QString    family      = settingsPtr->value( "fontFamily" );
    int        fontSize    = settingsPtr->value( "fontSize"   ).toInt();
 
-   QFont      oldfont     = QFont( family, fontSize );
-              widgetsPtr  = new SM_Widgets( oldfont );
-
-   // Get current font; second parameter is default
-   QFont font = QFont( family, fontSize, QFont::Normal );
+   QFont      font        = QFont( family, fontSize );
+              widgetsPtr  = new SM_Widgets( font );
 
    // Frame layout
    setWindowTitle( "Temperature Selection Dialog" );
+   setAttribute( Qt::WA_DeleteOnClose );
  
    QVBoxLayout* topbox = new QVBoxLayout( this );
    topbox->setSpacing( 2 );
@@ -40,24 +40,25 @@ SM3_Temps::SM3_Temps( SM_Settings* setngs, QString dta )
    tempsLayout->addWidget( lblLabel,     row++, 3 );
 
    // A line (lines 2 to n) looks like:
-   // interface:<interface name>,<sensor name:value[,<sensor name:value...]
+   // interface;<interface name>,<sensor name:value[,<sensor name:value...]
 
    // Add temperature data
    for ( int i = 1; i < sensors.size(); i++ )  // Skip first line -- not temps
    {
-     // line[ 0 ] is "interface"
-     // line[ 1 ] is rest of line
-     QStringList line  = sensors[ i ].split( ';' ); 
+     if ( ! sensors[ i ].startsWith( "interface;" ) ) continue; 
 
-     QStringList items     = line[ 1 ].split( ',' ); 
-     QString     interface = items[ 0 ];             // interface name
+     QStringList items     = sensors[ i ].mid(10).split( ',' ); // never empty
+     QString     interface = items[ 0 ];                        // interface name
       
      for ( int j = 1; j < items.size(); j++ )
      {
-       QString sensor = items.at( j ).split( ":" )[ 0 ];
+       int colon = items[ j ].lastIndexOf( ':' );  
+       if ( colon < 0 ) continue;
+
+       QString sensor = items[ j ].left( colon );
       
-       // Check with settings to see if the checkbox is should be set
-       // and the label cusomized
+       // Check with settings to see if the checkbox should be set
+       // and the label customized
       
                    lblInterface = widgetsPtr->sm_label( interface );
                    lblSensor    = widgetsPtr->sm_label( sensor );
@@ -68,13 +69,14 @@ SM3_Temps::SM3_Temps( SM_Settings* setngs, QString dta )
         // See if we have the entry in settings
         QString    key          = interface + "," + sensor;
 
-        foreach (const QString value, config )
+        for (const QString& value : config )
         {
-           if ( value.contains( key ) )
+           QStringList entries = value.split( ',' );   // interface,sensor,label
+           if ( entries.size() < 3 ) continue;         // Damaged entry
+
+           if ( entries[ 0 ] == interface && entries[ 1 ] == sensor )
            {
               cbBox->setCheckState( Qt::Checked );
-
-              QStringList entries = value.split( "," );
               leLabel->setText( entries[ 2 ] );
               break;
            }
@@ -89,18 +91,14 @@ SM3_Temps::SM3_Temps( SM_Settings* setngs, QString dta )
    
    // Buttons
    pb_apply = widgetsPtr->sm_pushbutton( tr( "Apply" ) );
-   connect( pb_apply, SIGNAL( clicked() ), SLOT( apply() ) );
-
-   //pb_help = sm_pushbutton( tr( "Help" ) );
-   //connect( pb_help, SIGNAL( clicked() ), SLOT( help() ) );
+   connect( pb_apply, &QPushButton::clicked, this, &SM3_Temps::apply );
 
    pb_exit = widgetsPtr->sm_pushbutton( tr( "Exit" ) );
-   connect( pb_exit, SIGNAL( clicked() ), SLOT( close() ) );
+   connect( pb_exit, &QPushButton::clicked, this, &SM3_Temps::close );
 
    QBoxLayout* buttons = new QHBoxLayout();
 
    buttons->addWidget( pb_apply  );
-   //buttons->addWidget( pb_help   );
    buttons->addWidget( pb_exit );
 
    topbox->addLayout( tempsLayout );
@@ -120,7 +118,7 @@ void SM3_Temps::get_saved_temp_config()
 
 void SM3_Temps::apply()
 {
-   QStringList config;
+   QStringList configuration;
    QString     group = QString( "temperatures" );
 
    // Remove the group
@@ -158,18 +156,13 @@ void SM3_Temps::apply()
       // Set temperature entry in settings
       key       = "temp" + QString::number( i );
 
-      config << QString( key + ";" + interface + "," + sensor + "," + label );
+      configuration << QString( key + ";" + interface + "," + sensor + "," + label );
    }
 
-   settingsPtr->addGroup( group, config );
+   settingsPtr->addGroup( group, configuration );
 
    settingsPtr->sync();
    emit updateTemps();
+   close();
 }
-
-//void SM_Font::help()
-//{
-// US_Help* help = new US_Help();
-// help->show_help( "manual/usfont.html" );
-//}
 

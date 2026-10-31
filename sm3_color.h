@@ -1,25 +1,25 @@
-//! \file sm_font.h
+//! \file sm3_color.h
 #ifndef SM_COLOR_H
 #define SM_COLOR_H
 
-#include <QColor>
 #include <QColorDialog>
+#include <QFrame>
+#include <QProgressBar>
 
 #include "sm3_widgets.h"
-#include "sm3_config.h"
 #include "sysmon3.h"
 
-//!  A class to allow the user to select a customized font.
+//!  A class to allow the user to select a customized color.
 class SM_Color : public QFrame
 {
   Q_OBJECT
   
   public:
-    //*! \brief Construct the window for font selection
+    //*! \brief Construct the window for color selection
     SM_Color( SM_Settings* );
     
     //! \brief A null destructor.
-    ~SM_Color() {};
+    ~SM_Color() {}
 
   signals:  
     void updateColors( void );
@@ -28,27 +28,6 @@ class SM_Color : public QFrame
     SM_Settings* settingsPtr;
     SM_Widgets*  widgetsPtr;
 
-    QSettings*   settings;
-    QString      server;
-
-    QComboBox*   cb_family;
-    QSpinBox*    sb_size;
-
-    QCheckBox*   ckbox_bold;
-    QGridLayout* ckbox_grid;
-    QHBoxLayout* stats_row;
-
-    QColor*      lbl_color;
-    QColor*      lbl_background;
-
-    QLabel*      small;
-    QLabel*      regular;
-    QLabel*      regularBold;
-    QLabel*      large;
-    QLabel*      largeBold;
-    QLabel*      title;
-    QLabel*      lbl_family;
-    QLabel*      lbl_size;
     QLabel*      sample_label;
     QLabel*      sample_data;
 
@@ -63,11 +42,13 @@ class SM_Color : public QFrame
 
     QPushButton* pb_apply;
     QPushButton* pb_default;
-    //QPushButton* pb_help;
     QPushButton* pb_exit;
 
-    void redraw( void );
-
+    void redraw    ( void );
+    void pick      ( QWidget*, QPalette::ColorRole );
+    void showColors( const QString&, const QString&,
+                     const QString&, const QString&,
+                     const QString&, const QString& );
   private slots:
   
     void label_color        ( void );
@@ -77,9 +58,8 @@ class SM_Color : public QFrame
     void progress_color     ( void );
     void progress_background( void );
 
-    void apply     ( void );
-    //void help      ( void );
-    void setDefault( void );
-    void update    ( int  );
+    void apply              ( void );
+    void setDefault         ( void );
+//    void update_colors      ( int  );
 };
 #endif

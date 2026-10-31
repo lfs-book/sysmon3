@@ -1,4 +1,4 @@
-//! \file sm_font.h
+//! \file sm3_font.h
 #ifndef SM_FONT_H
 #define SM_FONT_H
 
@@ -56,9 +56,7 @@ class SM_Font : public QFrame
   private slots:
   
     void apply     ( void );
-    //void help      ( void );
     void selectFont( void );
     void setDefault( void );
-    void update    ( int  );
 };
 #endif
